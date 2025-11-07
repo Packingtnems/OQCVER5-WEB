@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>KẾT QUẢ KIỂM TRA OQC - v4 (Reference)</title>
+  <style>
+    /* Common styles */
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f7fa; }
+    .container { padding: 20px; }
+    .tab-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap:wrap; }
+    .tab-buttons button {
+      padding: 10px 20px; border: none; border-radius: 6px;
+      background: #34495e; color: #fff; cursor: pointer;
+    }
+    .tab-buttons button.active { background: #27ae60; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    /* Tab 1: Phán định sản phẩm */
+    .app-container { display: flex; flex-direction: row; gap:20px; }
+    .left, .right { padding: 20px; overflow-y: auto; background: #fff; border-radius:8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .left { width: 40%; border-right: none; }
+    .right { width: 60%; }
+    label { font-weight: bold; display: block; margin: 10px 0 5px; }
+    input, select { padding: 5px; width: 200px; margin-bottom: 10px; border-radius:4px; border:1px solid #ccc; }
+    button { padding: 8px 16px; margin: 6px; border-radius: 6px; border: 1px solid #333; font-size: 14px; cursor: pointer; }
+    #okBtn { color: green; }
+    #ngBtn { color: red; }
+    #error { color: red; font-weight: bold; margin-top: 10px; }
+    table { margin-top: 10px; border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #eee; }
+    .duplicate { background-color: #ffb3b3; }
+    #loginScreen { margin-top: 20px; text-align: center; }
+    .mainApp { display: none; }
+    #clearLogBtn, #resetDataBtn { position: absolute; top: 12px; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; }
+    #clearLogBtn { right: 120px; background: #3498db; color: white; }
+    #clearLogBtn:hover { background: #2980b9; }
+    #resetDataBtn { right: 12px; background: #e74c3c; color: white; }
+    #resetDataBtn:hover { background: #c0392b; }
+    .stat { margin-top: 8px; font-size: 14px; }
+    .small { font-size:13px; color:#666; }
+
+    /* Tab 2 / reference */
+    .ref-status { margin-bottom:8px; font-weight:bold; }
+
+    /* Misc */
+    .sync-status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      display: none;
+    }
+    .sync-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .sync-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-container { flex-direction: column; }
+      .left, .right { width: 100%; }
+    }
+
+    /* Filter styles for Tab 3 */
+    .filter-container { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+    .filter-item { display: flex; flex-direction: column; }
+    .filter-item label { font-size: 12px; margin-bottom: 4px; }
+    .button-container { display: flex; gap: 10px; margin-bottom: 15px; }
+    .btn-filter, .btn-download, .btn-reset { 
+      padding: 8px 16px; 
+      color: white; 
+      border: none; 
+      border-radius: 4px; 
+      cursor: pointer; 
+    }
+    .btn-filter { background: #3498db; }
+    .btn-download { background: #27ae60; }
+    .btn-reset { background: #e74c3c; }
+    .btn-reset:hover { background: #c0392b; }
+
+    /* Sync button styles */
+    .sync-btn {
+      position: relative;
+      padding: 10px 18px;
+      font-size: 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .sync-btn:hover { background: #2980b9; }
+    .sync-btn:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      border-left-color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/clusterize.js@0.18.1/clusterize.min.js"></script>
+</head>
+<body>
+   <div style="margin-top:20px; display:flex; gap:10px; ">
+      <img src="logo.png" alt="Logo" style="height: 100px; width: auto; margin-right: 20px;">
+      <h2>📊 KẾT QUẢ KIỂM TRA OQC</h2>
+      </div>
+     </div>
+    
+    <div class="tab-buttons">
+      <button id="btnTab1" class="active" onclick="showTab(1)">📝 Phán định sản phẩm</button>
+      <button id="btnTab2" onclick="showTab(2)">🧾 Dữ liệu PRO (TEST)</button>
+      <button id="btnTab3" onclick="showTab(3)">🔧 Lắp Ráp</button>
+      <button id="btnTab4" onclick="showTab(4)">📑 Dữ liệu QC (OQC)</button>
+      <button id="btnTab5" onclick="showTab(5)">📈 Biểu đồ</button>
+    </div>
+    
+    <!-- Tab 1: Phán định sản phẩm -->
+    <div id="tab1" class="tab-content active">
+      <!-- Màn hình đăng nhập -->
+      <div id="loginScreen">
+        <h2>Đăng nhập</h2>
+        <label for="loginUser">Tên đăng nhập</label>
+        <input type="text" id="loginUser" placeholder="Nhập mã số nhân viên">
+        <label for="loginPass">Mật khẩu</label>
+        <input type="password" id="loginPass" placeholder="Nhập mật khẩu">
+        <label for="shift">Chọn ca</label>
+        <select id="shift">
+          <option value="Ca 1 (06:00-14:00)">Ca 1 (06:00 - 14:00)</option>
+          <option value="Ca 2 (14:00-22:00)">Ca 2 (14:00 - 22:00)</option>
+          <option value="Ca 1 dài (06:00-18:00)">Ca 1 dài (06:00 - 18:00)</option>
+          <option value="Ca 2 dài (18:00-06:00)">Ca 2 dài (18:00 - 06:00 hôm sau)</option>
+          <option value="Ca HC (08:00-16:30)">Ca HC (08:00 - 16:30)</option>
+        </select>
+        <label for="wo">Số lệnh sản xuất (WO)</label>
+        <input type="text" id="wo" placeholder="Nhập số WO" oninput="this.value=this.value.toUpperCase()">
+        <br>
+        <button onclick="login()">Đăng nhập</button>
+        <p id="loginError" style="color:red;"></p>
+      </div>
+
+      <!-- Giao diện chính -->
+      <div id="mainApp" class="mainApp app-container" style="display:none;">
+        <!-- Cột trái -->
+        <div class="left">
+          <h2>Phán định sản phẩm</h2>
+          <div style="position:relative;">
+            <button id="clearLogBtn" onclick="clearLogDisplay()">Xóa log</button>
+            <button id="resetDataBtn" onclick="resetAllData()">Reset dữ liệu</button>
+          </div>
+
+          <p class="stat">👤 Người kiểm tra: <b id="currentUser"></b></p>
+          <p class="stat">🕒 Ca: <b id="currentShift"></b></p>
+          <p class="stat">📋 WO: <b id="currentWO"></b></p>
+          <p class="stat">✅ OK: <b id="okCount">0</b> | ❌ NG: <b id="ngCount">0</b></p>
+
+          <label for="deliveryQty"><b>SỐ LƯỢNG GIAO</b></label>
+          <input type="number" id="deliveryQty" value="0" min="0" style="width:150px;">
+          <p id="deliveryStatus" style="color:blue;font-weight:bold;"></p>
+
+          <label for="mahang">Mã hàng</label>
+          <select id="mahang">
+            <option value="">-- Chọn mã hàng --</option>
+            <option value="ECM-2583-236">ECM-2583-236</option>
+            <option value="ECM-2583-164">ECM-2583-164</option>
+            <option value="ECM-2300">ECM-2300</option>
+            <option value="ECM-2310">ECM-2310</option>
+            <option value="IZ-1-R3">IZ-1-R3</option>
+            <option value="RM-4K-R3">RM-4K-R3</option>
+            <option value="P-7937">P-7937</option>
+            <option value="P-8105">P-8105</option>
+            <option value="P-8149">P-8149</option>
+            <option value="BMS 85AH">BMS 85AH</option>
+            <option value="BMS 57AH">BMS 57AH</option>
+            <option value="CONTROLLER">CONTROLLER</option>
+            <option value="CAS NEMO">CAS NEMO</option>
+            <option value="CAS MINI-DI">CAS MINI-DI</option>
+            <option value="CAS MINI-485">CAS MINI-485</option>
+            <option value="BN 2573A">BN 2573A</option>
+            <option value="OEM">OEM</option>
+            <option value="CONTROLLER (RETURN)">CONTROLLER (RETURN)</option>
+            <option value="BMS 85AH (RETURN)">BMS 85AH (RETURN)</option>
+            <option value="BMS 57AH (RETURN)">BMS 57AH (RETURN)</option>
+          </select>
+
+          <label for="qrcode">QR Code</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="text" id="qrcode" placeholder="Quét QR code" oninput="this.value=this.value.toUpperCase(); checkQRStatus(this.value);">
+            <span id="qrStatus" style="font-weight: bold; min-width: 200px;"></span>
+          </div>
+          <div class="small"><span id="qrSource" class="small"></span></div>
+
+          <label for="loi">Lỗi / Ghi chú</label>
+          <div style="display: flex; gap: 10px;">
+            <input list="errorList" id="loi" placeholder="Nhập lỗi (nếu có)">
+            <input type="text" id="ghichu" placeholder="Nhập ghi chú (nếu có)">
+          </div>
+          <datalist id="errorList">
+            <option value="Hàn giả">Hàn giả</option>
+            <option value="Sai Linh Kiện">Sai Linh Kiện</option>
+            <option value="Lỗi PCB">Lỗi PCB</option>
+            <option value="Lỏng Ngàm Connector">Lỏng Ngàm Connector</option>
+            <option value="Tràn Thiếc Trở Shunt">Tràn Thiếc Trở Shunt</option>
+            <option value="Lỗi mosfet">Lỗi mosfet</option>
+            <option value="Lệch Linh kiện">Lệch Linh kiện</option>
+            <option value="Bắc Cầu">Bắc Cầu</option>
+            <option value="Mất Linh Kiện">Mất Linh Kiện</option>
+            <option value="Mối hàn">Mối hàn</option>
+            <option value="Lỗi ốc">Lỗi ốc</option>
+            <option value="Lỗi nẹp viền">Lỗi nẹp viền</option>
+            <option value="Thiếu Potting">Thiếu Potting</option>
+            <option value="Lỗi 3M">Lỗi 3M</option>
+            <option value="Lỗi form U">Lỗi form U</option>
+            <option value="Thiếu Coating">Thiếu Coating</option>
+            <option value="Tràn Coating">Tràn Coating</option>
+            <option value="Vệ sinh">Vệ sinh</option>
+            <option value="Bị thiếc">Bị thiếc</option>
+            <option value="Lỗi chiều cao trở">Lỗi chiều cao trở</option>
+            <option value="Cháy gai ốc">Cháy gai ốc</option>
+            <option value="Lỗi bọc co nhiệt">Lỗi bọc co nhiệt</option>
+            <option value="Lỗi dây âm">Lỗi dây âm</option>
+            <option value="Lỗi tem pass">Lỗi tem pass</option>
+            <option value="Tróc pad">Tróc pad</option>
+            <option value="Cao led">Cao led</option>
+            <option value="Hư linh kiện">Hư linh kiện</option>
+            <option value="Kênh linh kiện">Kênh linh kiện</option>
+            <option value="Nghiêng led">Nghiêng led</option>
+            <option value="Thiếu thiếc">Thiếu thiếc</option>
+            <option value="Phế/Scrap">Phế/Scrap</option>
+            <option value="Test Fail">Test Fail</option>
+            <option value="Chưa Test">Chưa Test</option>
+          </datalist>
+
+          <div>
+            <button id="okBtn" onclick="saveData('OK')">OK</button>
+            <button id="ngBtn" onclick="saveData('NG')">NG</button>
+          </div>
+        
+          <p id="error"></p>
+
+          <!-- Thêm thông báo trạng thái đồng bộ -->
+          <div id="syncStatus" class="sync-status"></div>
+
+          <div>
+            <button onclick="exportCSV()">Xuất logfile</button>
+            <button id="syncBtn" class="sync-btn" onclick="syncToSheet()">Đồng bộ Google Sheet</button>
+            <button onclick="endShiftReport()">Báo cáo cuối ca</button>
+          </div>
+
+          <!-- Biểu đồ realtime -->
+          <div>
+            <h3>Báo cáo real-time</h3>
+            <div style="width: 200px; height: 200px;">
+              <canvas id="chartOKNG"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột phải -->
+        <div class="right">
+          <!-- Bộ lọc -->
+          <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+            <input type="text" id="searchBox" placeholder="Tìm QR / Mã hàng" onkeyup="renderTable()">
+            <select id="filterResult" onchange="renderTable()">
+              <option value="">--Tất cả--</option>
+              <option value="OK">OK</option>
+              <option value="NG">NG</option>
+            </select>
+          </div>
+          <table id="logTable">
+            <thead>
+              <tr>
+                <th>Mã hàng</th>
+                <th>QR Code</th>
+                <th>Phân định</th>
+                <th>Mô tả lỗi</th>
+                <th>Ngày</th>
+                <th>Giờ</th>
+                <th>Số lần xuất hiện</th>
+                <th>Mã nhân viên</th>
+                <th>Shift</th>
+                <th>PO</th>
+                <th>Ghi chú</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tab 2: Dữ liệu PRO (TEST) -->
+    <div id="tab2" class="tab-content">
+      <h3>🧾 DỮ LIỆU PRO (TEST)</h3>
+      <p class="ref-status" id="refStatus">⏳ Đang chờ tải dữ liệu PRO...</p>
+      <div style="margin-bottom:10px;">
+        <small>URL PRO Sheet:</small>
+        <div style="margin-top:6px;">
+          <input type="text" id="refUrlPreview" style="width:60%" readonly>
+        </div>
+      </div>
+
+      <div style="height:400px; overflow:auto; border:1px solid #ccc; border-radius:6px; padding:8px;">
+        <table id="refTable" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th>Mã hàng</th>
+              <th>QR code</th>
+              <th>Phán định</th>
+              <th>Mô tả lỗi</th>
+              <th>Giờ</th>
+              <th>Ngày</th>
+              <th>Số lần xuất hiện</th>
+              <th>Mã Nhân Viên</th>
+              <th>Ca làm việc</th>
+              <th>PO</th>
+              <th>Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="refTableBody"></tbody>
+        </table>
+      </div>
+      <div id="refCount" style="margin-top:8px;font-weight:bold;"></div>
+    </div>
+      
+    <!-- Tab 3: Lắp Ráp -->
+    <div id="tab3" class="tab-content">
+      <h3>🔧 DỮ LIỆU LẮP RÁP</h3>
+      <p class="ref-status" id="sauTestStatus">⏳ Đang chờ tải dữ liệu Lắp Ráp...</p>
+      <div style="margin-bottom:10px;">
+        <small>URL Lắp Ráp Sheet:</small>
+        <div style="margin-top:6px;">
+          <input type="text" id="sauTestUrlPreview" style="width:60%" readonly>
+        </div>
+      </div>
+
+      <div style="height:400px; overflow:auto; border:1px solid #ccc; border-radius:6px; padding:8px;">
+        <table id="sauTestTable" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th>Mã hàng</th>
+              <th>QR code</th>
+              <th>Phán định</th>
+              <th>Mô tả lỗi</th>
+              <th>Giờ</th>
+              <th>Ngày</th>
+              <th>Số lần xuất hiện</th>
+              <th>Mã Nhân Viên</th>
+              <th>Ca làm việc</th>
+              <th>PO</th>
+              <th>Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="sauTestTableBody"></tbody>
+        </table>
+      </div>
+      <div id="sauTestCount" style="margin-top:8px;font-weight:bold;"></div>
+    </div>
+      
+    <!-- Tab 4: Dữ liệu QC (OQC) -->
+    <div id="tab4" class="tab-content">
+      <h3>📑 DỮ LIỆU QC (OQC)</h3>
+      <div class="filter-container">
+        <div class="filter-item">
+          <label for="fromDate">Từ ngày</label>
+          <input type="date" id="fromDate">
+        </div>
+        <div class="filter-item">
+          <label for="toDate">Đến ngày</label>
+          <input type="date" id="toDate">
+        </div>
+        <div class="filter-item">
+          <label for="maSP">Mã sản phẩm</label>
+          <select id="maSP"><option value="">Tất cả mã</option></select>
+        </div>
+        <div class="filter-item">
+          <label for="searchQR">Tìm QR Code</label>
+          <input type="text" id="searchQR" placeholder="Nhập QR Code để lọc..." oninput="applyFilters()">
+        </div>
+        <div class="filter-item">
+          <label for="po">PO</label>
+          <select id="po"><option value="">Tất cả PO</option></select>
+        </div>
+      </div>
+
+      <div class="button-container">
+        <button class="btn-filter" onclick="applyFilters()">Lọc dữ liệu</button>
+        <button class="btn-download" onclick="reloadFromGoogle()">⭮ Tải từ Google Sheets</button>
+        <button class="btn-reset" onclick="resetFilters()">🗑️ Xóa bộ lọc</button>
+      </div>
+
+      <div id="scrollArea" style="height:500px; overflow:auto; border:1px solid #ccc;">
+        <table id="reportTable" style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th>Mã Hàng</th>
+              <th>QR Code</th>
+              <th>Phán định</th>
+              <th>Mô tả lỗi</th>
+              <th>Giờ</th>
+              <th>Ngày</th>
+              <th>Số lần xuất hiện</th>
+              <th>Mã nhân viên</th>
+              <th>Ca</th>
+              <th>PO</th>
+              <th>Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="clusterize-content" class="clusterize-content"></tbody>
+        </table>
+        <div id="clusterize-scroll" class="clusterize-scroll"></div>
+      </div>
+      <div id="recordCount" style="margin-top:5px; font-weight:bold;"></div>
+    </div>
+      
+    <!-- Tab 5: Biểu đồ -->
+    <div id="tab5" class="tab-content">
+      <div class="chart-container">
+        <h3>📊 Biểu đồ Pareto (theo Mô tả lỗi)</h3>
+        <div style="height: 400px;">
+          <canvas id="paretoChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <h3>📈 Biểu đồ so sánh theo ngày</h3>
+        <div style="height: 400px;">
+          <canvas id="dailyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================== CẤU HÌNH 3 GOOGLE SHEETS =====================
+    const PRO_SHEET_URL = "https://script.google.com/macros/s/AKfycbwGCEDo7faBhEh9FCv1ZlrfINyAvfwIg9EbXk-CqwZRYBKVOQJP2hIGjI02JbeWIYJC5A/exec";
+    const LAP_RAP_SHEET_URL = "https://script.google.com/macros/s/AKfycbylfaBg90qt9o8fWu83cevhmAXKn3Azg1ivs0NLC62TxtSKlDvT4xuuiO00y1mUPQI9nw/exec";
+    const QC_SHEET_URL = "https://script.google.com/macros/s/AKfycbwOt6HhlzmBT2PbhA_0qfwF7rlcrJ4XVPVQcPlh4YeswQ90DQ6rDYmCZl8OV6kqUtV1/exec";
+
+    // Biến toàn cục cho 3 datasets
+    let proData = [];      // Dữ liệu từ Sheet 1 (PRO)
+    let sauTestData = [];  // Dữ liệu từ Sheet 2 (Lắp Ráp)
+    let qcData = [];       // Dữ liệu từ Sheet 3 (QC)
+    let allData = [];      // Giữ cho tương thích
+
+    // ===================== HÀM XỬ LÝ NGÀY THÁNG =====================
+    function parseDateImproved(dateStr) {
+        if (!dateStr) return null;
+        
+        // Chuyển thành string
+        dateStr = dateStr.toString().trim();
+        
+        // Định dạng dd/mm/yyyy
+        let match = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (match) {
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1;
+            const year = parseInt(match[3], 10);
+            return new Date(year, month, day);
+        }
+        
+        // Định dạng yyyy-mm-dd
+        match = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+        if (match) {
+            const year = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1;
+            const day = parseInt(match[3], 10);
+            return new Date(year, month, day);
+        }
+        
+        // Định dạng timestamp
+        if (dateStr.includes('T')) {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                // Chỉ lấy phần ngày, bỏ qua giờ
+                return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            }
+        }
+        
+        // Thử parse trực tiếp
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+        
+        return null;
+    }
+
+    function formatDateForDisplay(date) {
+        if (!date || isNaN(date.getTime())) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    function getDateRange(startDate, endDate) {
+        const dates = [];
+        const current = new Date(startDate);
+        const end = new Date(endDate);
+        
+        while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return dates;
+    }
+
+    // ===================== TAB UI =====================
+    function showTab(n) {
+      document.querySelectorAll('.tab-buttons button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.getElementById('btnTab' + n).classList.add('active');
+      document.getElementById('tab' + n).classList.add('active');
+    }
+
+    // ===== PHẦN PHÁN ĐỊNH SẢN PHẨM =====
+    const users = {
+      "5035": "123456",
+      "3062": "223456", // HIẾU
+      "5053": "334567", // LY
+      "5088": "445678", // QUỲNH
+      "5383": "556789", // VY
+      "5381": "667890", // OANH
+      "5623": "778901", // PHÁT 
+      "5718": "889012", // NGA
+      "5628": "990123", // THÀNH
+      "5720": "112345", // MỸ
+      "5264": "001234", // KHÁNH
+      "4810": "1903", // C.TRANG
+    };
+    
+    // Cấu hình giới hạn ký tự QR code theo mã hàng
+    const qrCodeLimits = {
+  "ECM-2583-236": 30,
+  "ECM-2583-164": 30,
+  "ECM-2300": 30,
+  "ECM-2310": 30,
+  "IZ-1-R3": 49,
+  "RM-4K-R3": 49,
+  "P-7937": 35,
+  "P-8105": 35,
+  "P-8149": 35,
+  "BMS 85AH": 23,
+  "BMS 57AH": 23,
+  "CONTROLLER": 23,
+  "CAS NEMO": 25,
+  "CAS MINI-DI": 25,
+  "CAS MINI-485": 25,
+  "BN 2573A": 20,
+  "OEM": 15
+};
+     // Thêm sự kiện khi thay đổi mã hàng
+    document.getElementById("mahang").addEventListener("change", function() {
+  showQRLimitInfo(this.value);
+   });
+
+   function showQRLimitInfo(mahang) {
+  const limit = qrCodeLimits[mahang] || 50;
+  const infoElement = document.getElementById("qrLimitInfo");
+  
+  if (!infoElement) {
+    // Tạo element nếu chưa có
+    const newInfo = document.createElement("div");
+    newInfo.id = "qrLimitInfo";
+    newInfo.className = "small";
+    newInfo.style.color = "#e67e22";
+    newInfo.style.marginTop = "5px";
+    document.querySelector('label[for="qrcode"]').parentNode.appendChild(newInfo);
+  }
+  
+  document.getElementById("qrLimitInfo").textContent = 
+    `Giới hạn QR code: ${limit} ký tự`;
+   }
+    // records[0] là header
+    let records = [["Mã hàng","QR Code","Kết quả","Lỗi","Giờ","Ngày","Số lần xuất hiện","Người kiểm tra","Ca","WO","Ghi chú","Synced"]];
+    let qrCounter = {};
+    let currentUser = "";
+    let currentShift = "";
+    let currentWO = "";
+    let okCount = 0, ngCount = 0;
+    let chart;
+
+    let deliveryTarget = 0;
+    let deliveryCounter = 0;
+
+    // Load từ localStorage (records + qrCounter)
+    if (localStorage.getItem("records")) {
+      try { 
+        const savedRecords = JSON.parse(localStorage.getItem("records"));
+        if (Array.isArray(savedRecords) && savedRecords.length > 0) {
+          records = savedRecords;
+        }
+      } catch(e) { 
+        console.error("Lỗi khi load records từ localStorage:", e);
+      }
+    }
+    
+    if (localStorage.getItem("qrCounter")) {
+      try { 
+        qrCounter = JSON.parse(localStorage.getItem("qrCounter")); 
+      } catch(e) { 
+        console.error("Lỗi khi load qrCounter từ localStorage:", e);
+      }
+    }
+
+    // ===================== Utility =====================
+    function findLastRecordIndex(qrcode) {
+      for (let i = records.length - 1; i >= 1; i--) {
+        if (records[i][1] === qrcode) return i;
+      }
+      return -1;
+    }
+
+    function recomputeCountsForShift(shift) {
+      let ok = 0, ng = 0;
+      const latestResults = {};
+      for (let i = 1; i < records.length; i++) {
+        const row = records[i];
+        if (row[8] === shift) {
+          const qrcode = row[1];
+          if (!latestResults[qrcode] || i > latestResults[qrcode].index) {
+            latestResults[qrcode] = { result: row[2], index: i };
+          }
+        }
+      }
+      for (const qrcode in latestResults) {
+        if (latestResults[qrcode].result === "OK") ok++;
+        else if (latestResults[qrcode].result === "NG") ng++;
+      }
+      okCount = ok; 
+      ngCount = ng;
+      document.getElementById("okCount").textContent = okCount;
+      document.getElementById("ngCount").textContent = ngCount;
+      updateChart();
+    }
+
+    // ===================== Login =====================
+    function login() {
+      const uRaw = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+      const s = document.getElementById("shift").value;
+      const wo = document.getElementById("wo").value.trim();
+      
+      if (!uRaw || !wo) { 
+        document.getElementById("loginError").textContent = "⚠️ Vui lòng nhập đầy đủ!"; 
+        return; 
+      }
+      
+      const u = uRaw.toUpperCase();
+      if (users[u] && users[u] === p) {
+        currentUser = u;
+        currentShift = s;
+        currentWO = wo;
+        document.getElementById("currentUser").textContent = currentUser;
+        document.getElementById("currentShift").textContent = currentShift;
+        document.getElementById("currentWO").textContent = currentWO;
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "flex";
+        recomputeCountsForShift(currentShift);
+        renderTable();
+      } else {
+        document.getElementById("loginError").textContent = "⚠️ Sai tên đăng nhập hoặc mật khẩu!";
+      }
+    }
+
+    document.getElementById("deliveryQty").addEventListener("input", ()=>{
+      deliveryTarget = parseInt(document.getElementById("deliveryQty").value) || 0;
+      deliveryCounter = 0;
+      if (deliveryTarget > 0) {
+        document.getElementById("deliveryStatus").textContent = `🔄 Đã đặt mục tiêu: ${deliveryTarget}`;
+      } else {
+        document.getElementById("deliveryStatus").textContent = "";
+      }
+    });
+
+    // ===================== Save / Update log =====================
+    function saveData(result) {
+  // Kiểm tra số lượng giao
+  if (deliveryTarget === 0) {
+    alert("⚠️ Vui lòng nhập SỐ LƯỢNG GIAO trước khi quét!");
+    return;
+  }
+
+  if (deliveryCounter >= deliveryTarget) {
+    alert("⚠️ Đã đủ số lượng giao, không thể quét thêm!");
+    return;
+  }
+
+  const mahang = document.getElementById("mahang").value.trim().toUpperCase();
+  const qrcode = document.getElementById("qrcode").value.trim().toUpperCase();
+  const loi = document.getElementById("loi").value.trim();
+  const ghichu = document.getElementById("ghichu").value.trim();
+
+  if (!mahang || !qrcode) {
+    document.getElementById("error").textContent = "⚠️ Vui lòng nhập Mã hàng và QR Code!";
+    return;
+  }
+  
+  const limit = qrCodeLimits[mahang] || 50; // Mặc định 50 ký tự nếu không có cấu hình
+  if (qrcode.length > limit) {
+  alert(`⚠️ QR Code quá dài!\nMã hàng ${mahang} chỉ cho phép tối đa ${limit} ký tự.\nSố ký tự hiện tại: ${qrcode.length}`);
+  document.getElementById("qrcode").value = "";
+  document.getElementById("qrcode").focus();
+  checkQRStatus("");
+  return;
+  }
+
+  document.getElementById("error").textContent = "";
+
+  // Kiểm tra trùng lặp trong local records
+  const existedOK = records.some(r => r[1] === qrcode && r[2] === "OK");
+  if (existedOK) {
+    alert("⚠️ Sản phẩm này đã được đánh giá OK trước đó (local)!");
+    document.getElementById("qrcode").value = "";
+    document.getElementById("qrcode").focus();
+    checkQRStatus("");
+    return;
+  }
+
+  // Tiếp tục lưu dữ liệu
+  qrCounter[qrcode] = (qrCounter[qrcode] || 0) + 1;
+  const now = new Date();
+  const gio = now.toLocaleTimeString("vi-VN");
+  const ngay = now.toLocaleDateString("vi-VN");
+
+  // Cập nhật counts
+  let oldOkCount = 0, oldNgCount = 0;
+  for (let i = 1; i < records.length; i++) {
+    if (records[i][1] === qrcode) {
+      if (records[i][2] === "OK") oldOkCount++;
+      else if (records[i][2] === "NG") oldNgCount++;
+    }
+  }
+  okCount = okCount - oldOkCount;
+  ngCount = ngCount - oldNgCount;
+  if (result === "OK") okCount++; else ngCount++;
+
+  records.push([
+    mahang,
+    qrcode,
+    result,
+    loi,
+    gio,
+    ngay,
+    qrCounter[qrcode],
+    currentUser,
+    currentShift,
+    currentWO,
+    ghichu,
+    false
+  ]);
+
+  saveLocal();
+  renderTable();
+  document.getElementById("okCount").textContent = okCount;
+  document.getElementById("ngCount").textContent = ngCount;
+  updateChart();
+
+  document.getElementById("qrcode").value = "";
+  document.getElementById("loi").value = "";
+  document.getElementById("ghichu").value = "";
+  
+  deliveryCounter++;
+  document.getElementById("deliveryStatus").textContent = `Đã quét ${deliveryCounter}/${deliveryTarget}`;
+
+  if (deliveryCounter >= deliveryTarget) {
+    alert(`✅ Đã đủ ${deliveryTarget} sản phẩm!`);
+    document.getElementById("deliveryQty").value = 0;
+    deliveryTarget = 0;
+    deliveryCounter = 0;
+    document.getElementById("deliveryStatus").textContent = "";
+  }
+
+  const qEl = document.getElementById("qrcode");
+  if (qEl) {
+    qEl.focus();
+    qEl.select();
+  }
+
+  // 🚀 Đồng bộ NG OK lên Google Sheet ngay lập tức
+  if (result === "NG" || result === "OK") {
+    const lastRecord = records[records.length - 1];
+    const dataToSend = [lastRecord];
+
+    fetch(QC_SHEET_URL, {
+      method: "POST",
+      body: JSON.stringify(dataToSend),
+      headers: { "Content-Type": "application/json" },
+      mode: "no-cors"
+    })
+    .then(() => {
+      console.log("✅ Đã gửi dòng NG lên Google Sheet:", lastRecord[1]);
+      lastRecord[11] = true;
+      saveLocal();
+    })
+    .catch(err => {
+      console.error("❌ Lỗi đồng bộ NG:", err);
+    });
+  }
+
+  checkQRStatus("");
+}
+
+    // ===================== Render bảng (local) =====================
+    function renderTable() {
+      const tbody = document.getElementById("logTable").getElementsByTagName("tbody")[0];
+      tbody.innerHTML = "";
+
+      const search = document.getElementById("searchBox").value.toLowerCase();
+      const filterRes = document.getElementById("filterResult").value;
+
+      for (let i = records.length - 1; i >= 1; i--) {
+        const rowData = records[i];
+        
+        if (search && !rowData[0].toLowerCase().includes(search) && !rowData[1].toLowerCase().includes(search)) continue;
+        if (filterRes && rowData[2] !== filterRes) continue;
+
+        const tr = tbody.insertRow();
+        
+        let bgColor = "white";
+        if (rowData[2] === "NG") {
+          bgColor = "red";
+        } else if (rowData[2] === "OK") {
+          const hasPreviousNG = checkIfHasPreviousNG(rowData[1], i);
+          if (hasPreviousNG) {
+            bgColor = "#27ae60";
+          } else {
+            bgColor = "white";
+          }
+        }
+        tr.style.backgroundColor = bgColor;
+
+        for (let j = 0; j < 11; j++) {
+          const td = tr.insertCell();
+          td.textContent = rowData[j] || "";
+        }
+
+        const tdDel = tr.insertCell();
+        const btn = document.createElement("button");
+        btn.textContent = "Xóa";
+        btn.style.background = "#e74c3c";
+        btn.style.color = "white";
+        btn.style.border = "none";
+        btn.style.padding = "4px 8px";
+        btn.style.borderRadius = "4px";
+        btn.onclick = () => deleteRecord(i);
+        tdDel.appendChild(btn);
+
+        if ((rowData[6] || 0) > 1) tr.classList.add("duplicate");
+      }
+    }
+
+    function checkIfHasPreviousNG(qrcode, currentIndex) {
+      for (let i = currentIndex - 1; i >= 1; i--) {
+        if (records[i][1] === qrcode && records[i][2] === "NG") {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // ===================== Lưu local =====================
+    function saveLocal() {
+      try {
+        localStorage.setItem("records", JSON.stringify(records));
+        localStorage.setItem("qrCounter", JSON.stringify(qrCounter));
+      } catch(e) { 
+        console.warn("Lưu localStorage thất bại:", e); 
+      }
+    }
+
+    // ===================== Xuất CSV =====================
+    function exportCSV() {
+      if (!currentShift || !currentWO) {
+        alert("⚠️ Vui lòng đăng nhập và chọn ca + WO trước khi xuất file!");
+        return;
+      }
+
+      let mahang = document.getElementById("mahang").value.trim();
+      if (!mahang) { 
+        alert("⚠️ Vui lòng nhập mã hàng trước khi xuất file!"); 
+        return; 
+      }
+
+      let filteredRecords = [["Mã hàng","QR Code","Kết quả","Lỗi","Giờ","Ngày","Số lần xuất hiện","Người kiểm tra","Ca","WO","Ghi chú"]];
+      for (let i = 1; i < records.length; i++) {
+        if (records[i][8] === currentShift && records[i][9] === currentWO) {
+          filteredRecords.push(records[i]);
+        }
+      }
+
+      if (filteredRecords.length <= 1) {
+        alert("⚠️ Không có dữ liệu nào cho ca này!");
+        return;
+      }
+
+      let now = new Date();
+      let filename = `${mahang}_${currentShift.replace(/\s+/g, "_")}_${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}.csv`;
+
+      let csvContent = "\uFEFF" + filteredRecords.map(e => e.join(",")).join("\n");
+      let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      let link = document.createElement("a");
+      if (link.download !== undefined) {
+        let url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    // ===================== Sync Google Sheets (main) =====================
+    function syncToSheet() {
+  const sheetUrl = "https://script.google.com/macros/s/AKfycbwOt6HhlzmBT2PbhA_0qfwF7rlcrJ4XVPVQcPlh4YeswQ90DQ6rDYmCZl8OV6kqUtV1/exec"; 
+  
+  // 🔹 THAY ĐỔI: Gửi toàn bộ records (bao gồm cả ghi chú)
+  const dataToSend = records
+  .slice(1)
+  .filter(r => !r[11]); // 🔹 chỉ lấy dòng chưa sync
+
+
+  if (dataToSend.length === 0) {
+    alert("⚠️ Không có dữ liệu để đồng bộ!");
+    return;
+  }
+
+  console.log("Dữ liệu gửi lên Google Sheets:", dataToSend); // Debug
+
+  fetch(sheetUrl, {
+    method: "POST",
+    body: JSON.stringify(dataToSend),
+    headers: { "Content-Type": "application/json" },
+    mode: "no-cors"
+  })
+  .then(() => {
+  alert("✅ Đã gửi dữ liệu lên Google Sheets");
+
+  // 🔹 Đánh dấu các dòng đã gửi
+  records = records.map(r => {
+    if (r[11] === false) r[11] = true;
+    return r;
+  });
+  saveLocal();
+
+  console.log("Đã đánh dấu synced:", records);
+})
+
+  .catch(err => {
+    alert("❌ Lỗi đồng bộ: " + err);
+    console.error("Lỗi gửi dữ liệu:", err);
+  });
+}
+
+    // ===================== Báo cáo cuối ca =====================
+    function endShiftReport() {
+      let summary = {};
+      for (let i = 1; i < records.length; i++) {
+        if (records[i][8] === currentShift && records[i][9] === currentWO) {
+          let mahang = records[i][0];
+          let result = records[i][2];
+          let loi = records[i][3];
+
+          if (!summary[mahang]) {
+            summary[mahang] = { ok: 0, ng: 0, loiCount: {} };
+          }
+
+          if (result === "OK") {
+            summary[mahang].ok++;
+          } else if (result === "NG") {
+            summary[mahang].ng++;
+            summary[mahang].loiCount[loi] = (summary[mahang].loiCount[loi] || 0) + 1;
+          }
+        }
+      }
+
+      let report = `📊 Báo cáo ca ${currentShift} (WO: ${currentWO}):\n`;
+      for (let mahang in summary) {
+        let ok = summary[mahang].ok;
+        let ng = summary[mahang].ng;
+        let total = ok + ng;
+        let tyLeNG = total ? ((ng / total) * 100).toFixed(2) : 0;
+        let top3 = Object.entries(summary[mahang].loiCount)
+                         .sort((a,b)=>b[1]-a[1])
+                         .slice(0,3)
+                         .map(x => `${x[0]}(${x[1]})`)
+                         .join(", ") || "Không có";
+
+        report += `\n📦 Mã hàng: ${mahang}\n✅ OK: ${ok} | ❌ NG: ${ng} | 📉 Tỷ lệ NG: ${tyLeNG}%\n🔥 Top lỗi: ${top3}\n`;
+      }
+
+      alert(report);
+    }
+
+    // ===================== Chart =====================
+    function updateChart() {
+      const canvas = document.getElementById("chartOKNG");
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext("2d");
+      if (chart) chart.destroy();
+      
+      try {
+        chart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["OK", "NG"],
+            datasets: [{
+              data: [okCount, ngCount],
+              backgroundColor: ["#2ecc71", "#e74c3c"]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "50%",
+            radius: "90%",
+            plugins: { 
+              legend: { 
+                position: "right",
+                labels: {
+                  usePointStyle: true,
+                  padding: 20
+                }
+              }
+            }
+          }
+        });
+      } catch(e) {
+        console.error("Lỗi khi tạo biểu đồ:", e);
+      }
+    }
+
+    // ===================== Xóa log chỉ UI =====================
+    function clearLogDisplay() {
+      if (!confirm("Bạn có chắc muốn xóa bảng hiển thị? (Dữ liệu vẫn còn lưu trong bộ nhớ)")) return;
+      document.querySelector("#logTable tbody").innerHTML = "";
+      alert("✅ Đã xóa hiển thị log. Dữ liệu gốc vẫn còn!");
+    }
+
+    // ===================== Reset toàn bộ dữ liệu =====================
+    function resetAllData() {
+      if (!confirm("⚠️ Bạn có chắc muốn XÓA TOÀN BỘ dữ liệu (records + bộ đếm)?")) return;
+
+      const backupKey = "backup_records_" + (new Date()).toISOString();
+      try {
+        localStorage.setItem(backupKey, JSON.stringify(records));
+        localStorage.setItem(backupKey + "_qr", JSON.stringify(qrCounter));
+      } catch(e) { console.warn("Backup thất bại:", e); }
+
+      records = [["Mã hàng","QR Code","Kết quả","Lỗi","Giờ","Ngày","Số lần xuất hiện","Người kiểm tra","Ca","WO","Ghi chú"]];
+      qrCounter = {};
+      okCount = 0; ngCount = 0;
+      saveLocal();
+
+      renderTable();
+      recomputeCountsForShift(currentShift || "");
+      alert("✅ Đã reset dữ liệu. Bản backup đã lưu vào localStorage với key: " + backupKey);
+    }
+
+    // ===================== Xóa 1 dòng =====================
+    function deleteRecord(index) {
+      if (!confirm("Bạn có chắc muốn xóa dòng này?")) return;
+
+      index = Number(index);
+      if (isNaN(index) || index < 1 || index >= records.length) {
+        alert("Không tìm thấy bản ghi để xóa.");
+        return;
+      }
+
+      const removed = records.splice(index, 1)[0];
+      const removedQr = removed[1];
+      
+      recomputeCountsForShift(currentShift);
+      
+      saveLocal();
+      renderTable();
+    }
+
+    // ===================== HÀM TẢI DỮ LIỆU PRO (SHEET 1) =======
+    function loadReferenceData(silent = false) {
+      const statusEl = document.getElementById("refStatus");
+      const previewEl = document.getElementById("refUrlPreview");
+      const refBody = document.getElementById("refTableBody");
+      const refCount = document.getElementById("refCount");
+
+      if (!PRO_SHEET_URL || PRO_SHEET_URL.trim() === "") {
+        statusEl.innerHTML = "⚠️ PRO_SHEET_URL chưa được cấu hình.";
+        statusEl.style.color = "#e67e22";
+        return;
+      }
+
+      previewEl.value = PRO_SHEET_URL;
+      if (!silent) {
+        statusEl.textContent = "⏳ Đang tải dữ liệu PRO...";
+        statusEl.style.color = "black";
+      }
+
+      const noCacheUrl = PRO_SHEET_URL + "?t=" + Date.now();
+      fetch(noCacheUrl, { method: "GET", mode: "cors", cache: "no-store" })
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error("Dữ liệu PRO không hợp lệ");
+
+          proData = data;
+          
+          if (!silent) {
+            statusEl.textContent = `✅ Dữ liệu PRO: ${proData.length} dòng`;
+            statusEl.style.color = "green";
+          }
+          
+          renderReferenceTable();
+        })
+        .catch(err => {
+          console.error("Lỗi tải dữ liệu PRO:", err);
+          statusEl.innerHTML = `❌ Lỗi tải dữ liệu PRO: ${err.message}`;
+          statusEl.style.color = "red";
+        });
+    }
+
+    function renderReferenceTable() {
+      const body = document.getElementById("refTableBody");
+      body.innerHTML = "";
+
+      if (!Array.isArray(proData) || proData.length === 0) {
+        body.innerHTML = `<tr><td colspan="11" style="color:red;">❌ Không có dữ liệu PRO</td></tr>`;
+        document.getElementById("refCount").textContent = "0 dòng";
+        return;
+      }
+
+      // Hàm chuyển đổi timestamp thành giờ thực tế - FIXED
+      function convertTimestampToTime(timestamp) {
+        if (!timestamp) return "";
+        
+        // Nếu đã là giờ dạng HH:mm:ss thì giữ nguyên
+        if (typeof timestamp === "string" && timestamp.match(/^\d{1,2}:\d{1,2}:\d{1,2}$/)) {
+          return timestamp;
+        }
+        
+        // Nếu là timestamp từ Google Sheets (dạng 1899-12-30T04:15:25.000Z)
+        if (typeof timestamp === "string" && timestamp.includes("T")) {
+          try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return timestamp;
+            
+            // Sửa lỗi: Google Sheets timestamp thường là serial number, không phải real timestamp
+            const baseDate = new Date('1899-12-30');
+            const diffMs = date.getTime() - baseDate.getTime();
+            const correctedDate = new Date(baseDate.getTime() + diffMs);
+            
+            // Lấy giờ chính xác
+            const hours = String(correctedDate.getHours()).padStart(2, '0');
+            const minutes = String(correctedDate.getMinutes()).padStart(2, '0');
+            const seconds = String(correctedDate.getSeconds()).padStart(2, '0');
+            
+            return `${hours}:${minutes}:${seconds}`;
+          } catch (e) {
+            console.error("Lỗi convert time:", e);
+            return timestamp;
+          }
+        }
+        
+        return timestamp;
+      }
+
+      // Hàm chuyển đổi timestamp thành ngày thực tế
+      function convertTimestampToDate(timestamp) {
+        if (!timestamp) return "";
+        
+        // Nếu đã là ngày dạng dd/mm/yyyy thì giữ nguyên
+        if (typeof timestamp === "string" && timestamp.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/)) {
+          return timestamp;
+        }
+        
+        // Nếu là timestamp từ Google Sheets
+        if (typeof timestamp === "string" && timestamp.includes("T")) {
+          try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return timestamp;
+            
+            // Sửa lỗi tương tự như với giờ
+            const baseDate = new Date('1899-12-30');
+            const diffMs = date.getTime() - baseDate.getTime();
+            const correctedDate = new Date(baseDate.getTime() + diffMs);
+            
+            // Format thành ngày Việt Nam
+            return correctedDate.toLocaleDateString("vi-VN");
+          } catch (e) {
+            console.error("Lỗi convert date:", e);
+            return timestamp;
+          }
+        }
+        
+        return timestamp;
+      }
+
+      proData.forEach((r) => {
+        const tr = document.createElement("tr");
+
+        const cells = [
+          r["Mã hàng"] || r.maHang || "",
+          r["QR Code"] || r["QR code"] || r.qrCode || r.qr || "",
+          r["Phán định"] || r["Kết quả"] || r.phanDinh || "",
+          r["Mô tả lỗi"] || r.moTaLoi || "",
+          convertTimestampToTime(r["Giờ"] || r.gio || r["Time"]), // Chuyển đổi giờ
+          convertTimestampToDate(r["Ngày"] || r.ngay || r["Date"]), // Chuyển đổi ngày
+          r["Số lần xuất hiện"] || r.soLan || "",
+          r["Mã Nhân Viên"] || r.maNV || r.User || "",
+          r["Ca làm việc"] || r.caLam || r.Shift || "",
+          r["PO"] || r.po || "",
+          r["Ghi chú"] || r.ghichu || "",
+        ];
+
+        cells.forEach((c) => {
+          const td = document.createElement("td");
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+
+        body.appendChild(tr);
+      });
+
+      document.getElementById("refCount").textContent = `Tổng PRO data: ${proData.length} dòng`;
+    }
+
+    // ===================== HÀM TẢI DỮ LIỆU LẮP RÁP (SHEET 2) =======
+    function loadSauTestData(silent = false) {
+      const statusEl = document.getElementById("sauTestStatus");
+      const previewEl = document.getElementById("sauTestUrlPreview");
+      const sauTestBody = document.getElementById("sauTestTableBody");
+      const sauTestCount = document.getElementById("sauTestCount");
+
+      if (!LAP_RAP_SHEET_URL || LAP_RAP_SHEET_URL.trim() === "") {
+        statusEl.innerHTML = "⚠️ LAP_RAP_SHEET_URL chưa được cấu hình.";
+        statusEl.style.color = "#e67e22";
+        return;
+      }
+
+      previewEl.value = LAP_RAP_SHEET_URL;
+      if (!silent) {
+        statusEl.textContent = "⏳ Đang tải dữ liệu Lắp Ráp...";
+        statusEl.style.color = "black";
+      }
+
+      const noCacheUrl = LAP_RAP_SHEET_URL + "?t=" + Date.now();
+      fetch(noCacheUrl, { method: "GET", mode: "cors", cache: "no-store" })
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error("Dữ liệu Lắp Ráp không hợp lệ");
+
+          sauTestData = data;
+          
+          if (!silent) {
+            statusEl.textContent = `✅ Dữ liệu Lắp Ráp: ${sauTestData.length} dòng`;
+            statusEl.style.color = "green";
+          }
+          
+          renderSauTestTable();
+        })
+        .catch(err => {
+          console.error("Lỗi tải dữ liệu Lắp Ráp:", err);
+          statusEl.innerHTML = `❌ Lỗi tải dữ liệu Lắp Ráp: ${err.message}`;
+          statusEl.style.color = "red";
+        });
+    }
+
+    function renderSauTestTable() {
+      const body = document.getElementById("sauTestTableBody");
+      body.innerHTML = "";
+
+      if (!Array.isArray(sauTestData) || sauTestData.length === 0) {
+        body.innerHTML = `<tr><td colspan="11" style="color:red;">❌ Không có dữ liệu Lắp Ráp</td></tr>`;
+        document.getElementById("sauTestCount").textContent = "0 dòng";
+        return;
+      }
+
+      // Hàm chuyển đổi timestamp thành giờ thực tế
+      function convertTimestampToTime(timestamp) {
+        if (!timestamp) return "";
+        
+        if (typeof timestamp === "string" && timestamp.match(/^\d{1,2}:\d{1,2}:\d{1,2}$/)) {
+          return timestamp;
+        }
+        
+        if (typeof timestamp === "string" && timestamp.includes("T")) {
+          try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return timestamp;
+            
+            const baseDate = new Date('1899-12-30');
+            const diffMs = date.getTime() - baseDate.getTime();
+            const correctedDate = new Date(baseDate.getTime() + diffMs);
+            
+            const hours = String(correctedDate.getHours()).padStart(2, '0');
+            const minutes = String(correctedDate.getMinutes()).padStart(2, '0');
+            const seconds = String(correctedDate.getSeconds()).padStart(2, '0');
+            
+            return `${hours}:${minutes}:${seconds}`;
+          } catch (e) {
+            console.error("Lỗi convert time:", e);
+            return timestamp;
+          }
+        }
+        
+        return timestamp;
+      }
+
+      // Hàm chuyển đổi timestamp thành ngày thực tế
+      function convertTimestampToDate(timestamp) {
+        if (!timestamp) return "";
+        
+        if (typeof timestamp === "string" && timestamp.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/)) {
+          return timestamp;
+        }
+        
+        if (typeof timestamp === "string" && timestamp.includes("T")) {
+          try {
+            const date = new Date(timestamp);
+            if (isNaN(date.getTime())) return timestamp;
+            
+            const baseDate = new Date('1899-12-30');
+            const diffMs = date.getTime() - baseDate.getTime();
+            const correctedDate = new Date(baseDate.getTime() + diffMs);
+            
+            return correctedDate.toLocaleDateString("vi-VN");
+          } catch (e) {
+            console.error("Lỗi convert date:", e);
+            return timestamp;
+          }
+        }
+        
+        return timestamp;
+      }
+
+      sauTestData.forEach((r) => {
+        const tr = document.createElement("tr");
+
+        const cells = [
+          r["Mã hàng"] || r.maHang || "",
+          r["QR Code"] || r["QR code"] || r.qrCode || r.qr || "",
+          r["Phán định"] || r["Kết quả"] || r.phanDinh || "",
+          r["Mô tả lỗi"] || r.moTaLoi || "",
+          convertTimestampToTime(r["Giờ"] || r.gio || r["Time"]),
+          convertTimestampToDate(r["Ngày"] || r.ngay || r["Date"]),
+          r["Số lần xuất hiện"] || r.soLan || "",
+          r["Mã Nhân Viên"] || r.maNV || r.User || "",
+          r["Ca làm việc"] || r.caLam || r.Shift || "",
+          r["PO"] || r.po || "",
+          r["Ghi chú"] || r.ghichu || "",
+        ];
+
+        cells.forEach((c) => {
+          const td = document.createElement("td");
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+
+        body.appendChild(tr);
+      });
+
+      document.getElementById("sauTestCount").textContent = `Tổng Lắp Ráp data: ${sauTestData.length} dòng`;
+    }
+
+    // ===================== HÀM TẢI DỮ LIỆU QC (SHEET 3) - ĐÃ SỬA =======
+    function reloadFromGoogle(){
+      // Lưu trạng thái lọc hiện tại
+      const currentFilters = {
+        searchQR: document.getElementById("searchQR").value,
+        fromDate: document.getElementById("fromDate").value,
+        toDate: document.getElementById("toDate").value,
+        maSP: document.getElementById("maSP").value,
+        po: document.getElementById("po").value,
+        isFiltered: window.isFiltered || false
+      };
+
+      fetch(QC_SHEET_URL + "?t=" + Date.now())
+        .then(res=>{
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(newData=>{
+          if (!Array.isArray(newData)) {
+            throw new Error("Dữ liệu QC không hợp lệ");
+          }
+          
+          // Lưu số lượng bản ghi cũ để so sánh
+          const oldCount = qcData.length;
+          
+          // Cập nhật dữ liệu
+          qcData = newData;
+          allData = qcData;
+          
+          populateFilters(qcData);
+          
+          // Khôi phục trạng thái lọc nếu đang filter
+          if (currentFilters.isFiltered) {
+            document.getElementById("searchQR").value = currentFilters.searchQR;
+            document.getElementById("fromDate").value = currentFilters.fromDate;
+            document.getElementById("toDate").value = currentFilters.toDate;
+            document.getElementById("maSP").value = currentFilters.maSP;
+            document.getElementById("po").value = currentFilters.po;
+            
+            // Áp dụng lại bộ lọc
+            applyFilters();
+            
+            console.log(`🔄 Đã khôi phục bộ lọc sau khi cập nhật dữ liệu`);
+          } else {
+            // Nếu không filter, hiển thị toàn bộ dữ liệu
+            renderReportTable(qcData);
+          }
+          
+          // Vẽ biểu đồ với dữ liệu hiện tại (đã filter hoặc toàn bộ)
+          const dataToDraw = currentFilters.isFiltered ? filteredDataGlobal : qcData;
+          if (dataToDraw.length > 0) {
+            setTimeout(() => {
+              drawPareto(dataToDraw);
+              drawDailyChart(dataToDraw);
+            }, 100);
+          }
+          
+          // Thông báo nếu có dữ liệu mới
+          if (newData.length > oldCount) {
+            const newCount = newData.length - oldCount;
+            console.log(`📈 Đã cập nhật thêm ${newCount} bản ghi mới`);
+            
+            // Hiển thị thông báo tạm thời
+            if (document.getElementById('tab4').classList.contains('active')) {
+              showTempNotification(`Đã cập nhật thêm ${newCount} bản ghi mới`, 3000);
+            }
+          }
+        })
+        .catch(err=>{
+          console.error("Không lấy được dữ liệu QC:", err);
+          // Khôi phục lại dữ liệu cũ nếu có lỗi
+          if (currentFilters.isFiltered) {
+            applyFilters();
+          }
+        });
+    }
+
+    // ======= HÀM KIỂM TRA TRẠNG THÁI QR (SO SÁNH 3 TAB) =======
+    // HÀM SỬA LỖI - XỬ LÝ ĐÚNG THỜI GIAN TỪ GOOGLE SHEETS
+    function parseRecordDateTime(dateField, timeField) {
+      let dateRaw = (dateField || "").toString().trim();
+      let timeRaw = (timeField || "").toString().trim();
+
+      console.log("🔍 parseRecordDateTime input:", { dateField, timeField, dateRaw, timeRaw });
+
+      // TRƯỜNG HỢP 1: CÓ CẢ 2 TIMESTAMP (dateField có ngày thực, timeField có giờ thực)
+      if (dateRaw.includes("T") && timeRaw.includes("1899-12-30")) {
+        try {
+          // Lấy ngày từ dateField (ngày thực)
+          const datePart = new Date(dateRaw);
+          // Lấy giờ từ timeField (giờ thực)
+          const timePart = new Date(timeRaw);
+          
+          if (!isNaN(datePart.getTime()) && !isNaN(timePart.getTime())) {
+            // Kết hợp ngày thực + giờ thực
+            const resultDate = new Date(datePart);
+            resultDate.setHours(
+              timePart.getHours(),
+              timePart.getMinutes(), 
+              timePart.getSeconds(),
+              0
+            );
+            
+            console.log("✅ Đã kết hợp ngày thực + giờ thực:", { 
+              dateField, 
+              timeField,
+              result: resultDate 
+            });
+            
+            return resultDate;
+          }
+        } catch (e) {
+          console.error("Lỗi kết hợp timestamp:", e);
+        }
+      }
+
+      // TRƯỜNG HỢP 2: CHỈ CÓ TIMESTAMP GIỜ (1899-12-30)
+      if (dateRaw.includes("1899-12-30") || timeRaw.includes("1899-12-30")) {
+        const raw = dateRaw.includes("1899-12-30") ? dateRaw : timeRaw;
+        const d = new Date(raw);
+        
+        if (!isNaN(d.getTime())) {
+          // Lấy giờ, phút, giây từ timestamp
+          const hh = String(d.getHours()).padStart(2, "0");
+          const mm = String(d.getMinutes()).padStart(2, "0");
+          const ss = String(d.getSeconds()).padStart(2, "0");
+          
+          // Tạo đối tượng Date với ngày hiện tại và giờ thực
+          const resultDate = new Date();
+          resultDate.setHours(hh, mm, ss, 0);
+          
+          console.log("✅ Đã xử lý timestamp 1899:", { 
+            input: raw, 
+            output: resultDate,
+            time: `${hh}:${mm}:${ss}`
+          });
+          
+          return resultDate;
+        }
+      }
+
+      // TRƯỜNG HỢP 3: DATE FIELD CÓ NGÀY THỰC (không có timeField hoặc timeField rỗng)
+      if (dateRaw.includes("T") && !timeRaw) {
+        const d = new Date(dateRaw);
+        if (!isNaN(d.getTime())) {
+          console.log("✅ Đã xử lý dateField có ngày thực:", { dateRaw, result: d });
+          return d;
+        }
+      }
+
+      // XỬ LÝ CÁC ĐỊNH DẠNG KHÁC (giữ nguyên logic cũ)
+      // dd/mm/yyyy + HH:MM:SS
+      const vnFormat = dateRaw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (vnFormat && timeRaw) {
+        const [_, day, month, year] = vnFormat;
+        const timeParts = timeRaw.split(":").map(x => parseInt(x) || 0);
+        const [hh, mm, ss] = timeParts.slice(0, 3);
+        
+        const result = new Date(year, month - 1, day, hh, mm, ss);
+        console.log("✅ Đã xử lý định dạng VN:", { dateRaw, timeRaw, result });
+        return result;
+      }
+
+      // yyyy-mm-dd + HH:MM:SS
+      const isoFormat = dateRaw.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (isoFormat && timeRaw) {
+        const [_, year, month, day] = isoFormat;
+        const timeParts = timeRaw.split(":").map(x => parseInt(x) || 0);
+        const [hh, mm, ss] = timeParts.slice(0, 3);
+        
+        const result = new Date(year, month - 1, day, hh, mm, ss);
+        console.log("✅ Đã xử lý định dạng ISO:", { dateRaw, timeRaw, result });
+        return result;
+      }
+
+      // Fallback: thử parse trực tiếp
+      if (dateRaw && timeRaw) {
+        const combined = `${dateRaw} ${timeRaw}`;
+        const d = new Date(combined);
+        if (!isNaN(d.getTime())) {
+          console.log("✅ Đã parse trực tiếp:", { combined, result: d });
+          return d;
+        }
+      }
+
+      console.warn("❌ Không thể parse datetime:", { dateRaw, timeRaw });
+      return null;
+    }
+
+    // HÀM KIỂM TRA QR STATUS MỚI - SO SÁNH 3 TAB
+    function checkQRStatus(qrcode) {
+      const statusEl = document.getElementById("qrStatus");
+      const sourceEl = document.getElementById("qrSource");
+      if (!statusEl) return;
+      if (!qrcode) {
+        statusEl.textContent = "";
+        if (sourceEl) sourceEl.textContent = "";
+        return;
+      }
+
+      const code = qrcode.trim().toUpperCase();
+
+      // Kiểm tra xem đã tải đủ dữ liệu chưa
+      if (!Array.isArray(proData) || !Array.isArray(sauTestData) || !Array.isArray(qcData) || 
+          proData.length === 0 || sauTestData.length === 0 || qcData.length === 0) {
+        statusEl.textContent = "⚠️ Chưa tải đủ dữ liệu!";
+        statusEl.style.color = "#e67e22";
+        if (sourceEl) sourceEl.textContent = "";
+        return;
+      }
+
+      // Tìm tất cả bản ghi của QR code này trong 3 datasets
+      const proRecords = proData.filter(r =>
+        ((r["QR Code"] || r["QR code"] || r.qrCode || r.qr || "") + "").toString().trim().toUpperCase() === code
+      );
+      const sauTestRecords = sauTestData.filter(r =>
+        ((r["QR Code"] || r["QR code"] || r.qrCode || r.qr || "") + "").toString().trim().toUpperCase() === code
+      );
+      const qcRecords = qcData.filter(r =>
+        ((r["QR Code"] || r["QR code"] || r.qrCode || r.qr || "") + "").toString().trim().toUpperCase() === code
+      );
+
+      // Nếu không có bản ghi nào
+      if (proRecords.length === 0 && sauTestRecords.length === 0 && qcRecords.length === 0) {
+        statusEl.textContent = "🆕 CHƯA TEST";
+        statusEl.style.color = "red";
+        if (sourceEl) sourceEl.textContent = "";
+        return;
+      }
+
+      // TẠO MẢNG TẤT CẢ BẢN GHI VÀ SẮP XẾP THEO THỜI GIAN
+      const allRecords = [];
+
+      // Thêm bản ghi từ PRO
+      proRecords.forEach(r => {
+        const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
+        if (dt) {
+          allRecords.push({
+            source: "PRO",
+            result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
+            datetime: dt,
+            rawDate: r["Ngày"] || r.ngay,
+            rawTime: r["Giờ"] || r.gio
+          });
+        }
+      });
+
+      // Thêm bản ghi từ Lắp Ráp
+      sauTestRecords.forEach(r => {
+        const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
+        if (dt) {
+          allRecords.push({
+            source: "LAP_RAP",
+            result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
+            datetime: dt,
+            rawDate: r["Ngày"] || r.ngay,
+            rawTime: r["Giờ"] || r.gio
+          });
+        }
+      });
+
+      // Thêm bản ghi từ QC
+      qcRecords.forEach(r => {
+        const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
+        if (dt) {
+          allRecords.push({
+            source: "QC",
+            result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
+            datetime: dt,
+            rawDate: r["Ngày"] || r.ngay,
+            rawTime: r["Giờ"] || r.gio
+          });
+        }
+      });
+
+      // Sắp xếp theo thời gian (mới nhất trước)
+      allRecords.sort((a, b) => b.datetime.getTime() - a.datetime.getTime());
+
+      console.log("📊 Tất cả bản ghi QR:", allRecords);
+
+      // Lấy bản ghi mới nhất
+      const latestRecord = allRecords[0];
+      if (!latestRecord) {
+        statusEl.textContent = "❓ KHÔNG XÁC ĐỊNH";
+        statusEl.style.color = "orange";
+        return;
+      }
+
+      // LOGIC HIỂN THỊ THEO KẾT QUẢ MỚI NHẤT
+      if (latestRecord.result === "OK") {
+        switch(latestRecord.source) {
+          case "PRO":
+            statusEl.textContent = "✅ ĐÃ PASS TEST";
+            statusEl.style.color = "green";
+            break;
+          case "LAP_RAP":
+            statusEl.textContent = "🔧 LẮP RÁP ĐÃ SỬA";
+            statusEl.style.color = "green";
+            break;
+          case "QC":
+            statusEl.textContent = "📑 QC PASS";
+            statusEl.style.color = "green";
+            break;
+        }
+      } else if (latestRecord.result === "NG") {
+        switch(latestRecord.source) {
+          case "PRO":
+            statusEl.textContent = "❌ TEST FAIL";
+            statusEl.style.color = "red";
+            break;
+          case "LAP_RAP":
+            statusEl.textContent = "🔧 LẮP RÁP CHƯA SỬA";
+            statusEl.style.color = "red";
+            break;
+          case "QC":
+            statusEl.textContent = "📑 QC FAIL";
+            statusEl.style.color = "red";
+            break;
+        }
+      } else {
+        statusEl.textContent = "❓ KẾT QUẢ KHÔNG RÕ";
+        statusEl.style.color = "orange";
+      }
+
+      // Hiển thị thông tin nguồn và thời gian
+      if (sourceEl) {
+        const sourceText = latestRecord.source === "PRO" ? "PRO" : 
+                          latestRecord.source === "LAP_RAP" ? "Lắp Ráp" : "QC";
+        const timeText = latestRecord.datetime.toLocaleString("vi-VN");
+        sourceEl.textContent = `${sourceText}: ${timeText}`;
+      }
+
+      // KIỂM TRA TRẠNG THÁI RE-TEST
+      if (latestRecord.result === "NG") {
+        // Tìm xem có bản ghi OK nào sau thời điểm NG không
+        const hasRetest = allRecords.some(record => 
+          record.result === "OK" && record.datetime > latestRecord.datetime
+        );
+
+        if (hasRetest) {
+          statusEl.textContent += " → ĐÃ RE-TEST";
+          statusEl.style.color = "blue";
+        } else {
+          statusEl.textContent += " → CHƯA RE-TEST";
+        }
+      }
+    }
+
+    // ===================== REPORT & CHARTS (main sheet) =====================
+    let paretoChart, dailyChart;
+    let clusterize = null;
+    let filteredDataGlobal = [];
+
+    function populateFilters(data){
+      const maSPs = new Set();
+      const pos = new Set();
+      data.forEach(r=>{
+        if (r.maHang) maSPs.add(r.maHang);
+        if (r.po) pos.add(r.po);
+      });
+      fillSelect("maSP",maSPs);
+      fillSelect("po",pos);
+    }
+
+    function fillSelect(id, values){
+      const select = document.getElementById(id);
+      select.innerHTML = `<option value="">Tất cả</option>`;
+      values.forEach(v=>select.innerHTML+=`<option value="${v}">${v}</option>`);
+    }
+
+    function applyFilters() {
+  window.isFiltered = true;
+  window.preventAutoReload = true;
+  
+  const searchQR = document.getElementById("searchQR").value.trim().toUpperCase();
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+  const maSP = document.getElementById("maSP").value;
+  const po = document.getElementById("po").value;
+
+  console.log("🔍 Filtering - From:", fromDate, "To:", toDate);
+
+  filteredDataGlobal = qcData.filter(r => {
+    let match = true;
+
+    const qrValue = r["QR Code"] || r["Qr code"] || r["QR code"] || r.qrCode || r.qr || "";
+    const maHangValue = r["Mã hàng"] || r.maHang || "";
+    const poValue = r["PO"] || r.po || "";
+    const ngayStr = r["Ngày"] || r.ngay;
+    const ngay = parseDateImproved(ngayStr); // Chuyển ngày từ chuỗi sang đối tượng Date
+
+    // Lọc theo QR
+    if (searchQR && !qrValue.toString().toUpperCase().includes(searchQR)) match = false;
+
+    // Lọc theo mã sản phẩm
+    if (maSP && maHangValue !== maSP) match = false;
+
+    // Lọc theo PO
+    if (po && poValue !== po) match = false;
+
+    // --- Lọc theo khoảng ngày (bao gồm cả ngày đầu & ngày cuối) ---
+    let filterFrom = null, filterTo = null;
+    if (fromDate) {
+      filterFrom = new Date(fromDate);
+      filterFrom.setHours(0, 0, 0, 0);
+    }
+    if (toDate) {
+      filterTo = new Date(toDate);
+      filterTo.setHours(0, 0, 0, 0);
+    }
+
+    if ((filterFrom || filterTo) && !ngay) {
+      // Nếu bản ghi không có ngày mà người dùng chọn khoảng thời gian -> loại
+      match = false;
+    } else if (ngay) {
+      // Chuẩn hóa ngày bản ghi (chỉ lấy phần ngày)
+      const ngayOnly = new Date(ngay.getFullYear(), ngay.getMonth(), ngay.getDate());
+
+      // Bao gồm cả ngày đầu tiên và ngày cuối cùng
+      if (filterFrom && ngayOnly < filterFrom) match = false;
+      if (filterTo && ngayOnly > filterTo) match = false;
+    }
+
+    return match;
+  });
+
+  console.log("✅ Filtered data count:", filteredDataGlobal.length);
+
+  // Hiển thị dữ liệu sau khi lọc
+  renderReportTable(filteredDataGlobal);
+  
+  // Cập nhật số lượng bản ghi hiển thị
+  const recordCount = document.getElementById("recordCount");
+  if (recordCount) {
+    const totalCount = qcData.length;
+    const filteredCount = filteredDataGlobal.length;
+    if (filteredCount < totalCount) {
+      recordCount.innerHTML = `Đang hiển thị: <b>${filteredCount}</b> / <b>${totalCount}</b> dòng (đã lọc)`;
+    } else {
+      recordCount.textContent = `Tổng: ${totalCount} dòng`;
+    }
+  }
+
+  // Cập nhật biểu đồ với dữ liệu lọc
+  drawPareto(filteredDataGlobal);
+  drawDailyChart(filteredDataGlobal);
+}
+
+    function resetFilters() {
+      document.getElementById("searchQR").value = "";
+      document.getElementById("fromDate").value = "";
+      document.getElementById("toDate").value = "";
+      document.getElementById("maSP").value = "";
+      document.getElementById("po").value = "";
+      
+      window.isFiltered = false;
+      renderReportTable(qcData);
+      
+      const recordCount = document.getElementById("recordCount");
+      if (recordCount) {
+        recordCount.textContent = `Tổng: ${qcData.length} dòng`;
+      }
+      
+      // Vẽ lại biểu đồ với toàn bộ dữ liệu
+      drawPareto(qcData);
+      drawDailyChart(qcData);
+    }
+
+    function renderReportTable(data) {
+      const rows = data.map(r => {
+        let gioRaw = r["Giờ"] || r.gio || "";
+        let ngayRaw = r["Ngày"] || r.ngay || "";
+
+        function formatDateTime(value, type="date") {
+          if (!value) return "";
+          try {
+            const d = new Date(value);
+            if (isNaN(d)) return value;
+            if (type === "time") return d.toLocaleTimeString("vi-VN", { hour12: false });
+            return d.toLocaleDateString("vi-VN");
+          } catch {
+            return value;
+          }
+        }
+
+        const gio = formatDateTime(gioRaw, "time");
+        const ngay = formatDateTime(ngayRaw, "date");
+
+        return `
+          <tr>
+            <td>${r["Mã hàng"] || r.maHang || ""}</td>
+            <td>${r["QR code"] || r.qrCode || ""}</td>
+            <td>${r["Phán định"] || r.phanDinh || ""}</td>
+            <td>${r["Mô tả lỗi"] || r.moTaLoi || ""}</td>
+            <td>${gio}</td>
+            <td>${ngay}</td>
+            <td>${r["Số lần xuất hiện"] || r.soLan || ""}</td>
+            <td>${r["Mã Nhân Viên"] || r.maNV || r.User || ""}</td>
+            <td>${r["Ca làm việc"] || r.caLam || r.Shift || ""}</td>
+            <td>${r["PO"] || r.po || ""}</td>
+            <td>${r["Ghi chú"] || r.ghichu || ""}</td>
+          </tr>
+        `;
+      });
+
+      if (!clusterize) {
+        clusterize = new Clusterize({
+          rows: rows,
+          scrollId: 'scrollArea',
+          contentId: 'clusterize-content'
+        });
+      } else {
+        clusterize.update(rows);
+      }
+
+      const info = document.getElementById("recordCount");
+      if (info) info.textContent = `Tổng: ${data.length} dòng`;
+    }
+
+    function drawPareto(data){
+      const canvas = document.getElementById("paretoChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (paretoChart) try{ paretoChart.destroy(); }catch(e){}
+      const loiCount = {};
+      data.forEach(r=>{
+        if (r.moTaLoi && r.phanDinh === "NG") {
+          loiCount[r.moTaLoi] = (loiCount[r.moTaLoi] || 0) + 1;
+        }
+      });
+      const loiSorted = Object.entries(loiCount).sort((a,b)=>b[1]-a[1]);
+      const labels = loiSorted.map(x=>x[0]);
+      const values = loiSorted.map(x=>x[1]);
+      const total = values.reduce((a,b)=>a+b,0) || 1;
+      const cumsum = values.map((sum=>v=>sum+=v)(0));
+      const cumPerc = cumsum.map(s=>(s/total*100).toFixed(1));
+      paretoChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Số lỗi",
+            data: values,
+            backgroundColor: "#3498db",
+            order: 2
+          },{
+            label: "Tỷ lệ tích lũy (%)",
+            data: cumPerc,
+            type: "line",
+            borderColor: "#e74c3c",
+            backgroundColor: "rgba(231,76,60,0.1)",
+            fill: true,
+            yAxisID: "y1",
+            order: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Số lỗi" } },
+            y1: { position: "right", beginAtZero: true, max: 100, title: { display: true, text: "Tỷ lệ %" }, grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+    }
+
+    function drawDailyChart(data) {
+    const canvas = document.getElementById("dailyChart");
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (dailyChart) {
+        try { dailyChart.destroy(); } catch(e) {}
+    }
+
+    console.log("🔄 Vẽ biểu đồ với", data.length, "bản ghi");
+
+    // CÁCH TIẾP CẬN MỚI: XỬ LÝ TRỰC TIẾP KHÔNG QUA HÀM PHỤ
+    const dateStats = {};
+    
+    // 1. THU THẬP VÀ PHÂN TÍCH DỮ LIỆU TRỰC TIẾP
+    data.forEach((record, index) => {
+        const rawDate = record["Ngày"] || record.ngay;
+        const result = (record["Phán định"] || record.phanDinh || "").toString().trim().toUpperCase();
+        
+        if (!rawDate) {
+            console.warn(`Bản ghi ${index} không có ngày`);
+            return;
+        }
+
+        // XỬ LÝ NGÀY TRỰC TIẾP - KHÔNG DÙNG HÀM parseDateImproved
+        let dateObj = null;
+        let dateKey = null;
+        let displayDate = null;
+
+        // Thử các định dạng phổ biến
+        if (rawDate.includes('/')) {
+            const parts = rawDate.split('/');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]) - 1;
+                const year = parseInt(parts[2]);
+                dateObj = new Date(year, month, day);
+                dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                displayDate = `${String(day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}`;
+            }
+        } else if (rawDate.includes('-')) {
+            const parts = rawDate.split('-');
+            if (parts.length === 3) {
+                if (parts[0].length === 4) {
+                    // yyyy-mm-dd
+                    dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                    dateKey = rawDate;
+                    displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                } else {
+                    // dd-mm-yyyy
+                    dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+                    dateKey = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    displayDate = `${parts[0]}/${parts[1]}/${parts[2]}`;
+                }
+            }
+        }
+
+        // Fallback: parse trực tiếp
+        if (!dateObj || isNaN(dateObj.getTime())) {
+            dateObj = new Date(rawDate);
+            if (!isNaN(dateObj.getTime())) {
+                dateKey = dateObj.toISOString().split('T')[0];
+                displayDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+            }
+        }
+
+        if (!dateObj || isNaN(dateObj.getTime())) {
+            console.warn(`Không thể parse ngày: "${rawDate}"`);
+            return;
+        }
+
+        // SỬ DỤNG DATEKEY LÀM KEY CHÍNH
+        if (!dateStats[dateKey]) {
+            dateStats[dateKey] = {
+                displayDate: displayDate,
+                ok: 0,
+                ng: 0,
+                total: 0,
+                dateObj: dateObj,
+                rawDate: rawDate // Lưu cả ngày gốc để debug
+            };
+        }
+
+        const stats = dateStats[dateKey];
+        if (result === "OK") {
+            stats.ok++;
+        } else if (result === "NG") {
+            stats.ng++;
+        }
+        stats.total = stats.ok + stats.ng;
+
+        console.log(`✅ ${rawDate} -> ${dateKey} (${displayDate}): ${result}`);
+    });
+
+    console.log("📊 Thống kê theo ngày:", dateStats);
+
+    // 2. TẠO MẢNG NGÀY ĐẦY ĐỦ
+    const allDateKeys = Object.keys(dateStats);
+    if (allDateKeys.length === 0) {
+        console.warn("❌ Không có ngày nào hợp lệ");
+        return;
+    }
+
+    // SẮP XẾP NGÀY
+    allDateKeys.sort();
+    console.log("📅 Tất cả ngày (đã sắp xếp):", allDateKeys);
+
+    // 3. CHUẨN BỊ DỮ LIỆU CHO BIỂU ĐỒ
+    const labels = [];
+    const okData = [];
+    const ngData = [];
+    const totalData = [];
+    const percNG = [];
+
+    allDateKeys.forEach(dateKey => {
+        const stats = dateStats[dateKey];
+        
+        labels.push(stats.displayDate);
+        okData.push(stats.ok);
+        ngData.push(stats.ng);
+        totalData.push(stats.total);
+        
+        const percentage = stats.total > 0 ? (stats.ng / stats.total * 100) : 0;
+        percNG.push(parseFloat(percentage.toFixed(2)));
+        
+        console.log(`📈 ${stats.displayDate}: OK=${stats.ok}, NG=${stats.ng}, Total=${stats.total}, %NG=${percentage.toFixed(2)}%`);
+    });
+
+    // 4. KIỂM TRA XEM CÓ THIẾU NGÀY KHÔNG
+    console.log("🔍 KIỂM TRA CUỐI CÙNG:");
+    console.log("Số ngày trong dữ liệu:", allDateKeys.length);
+    console.log("Số ngày trong biểu đồ:", labels.length);
+    console.log("Ngày trong biểu đồ:", labels);
+
+    // 5. VẼ BIỂU ĐỒ
+    try {
+        dailyChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    { 
+                        label: "Tổng số lượng", 
+                        data: totalData, 
+                        backgroundColor: "#2ecc71", 
+                        yAxisID: "y",
+                        barPercentage: 0.6
+                    },
+                                        { 
+                        label: "NG", 
+                        data: ngData, 
+                        backgroundColor: "#e74c3c", 
+                        yAxisID: "y",
+                        barPercentage: 0.6
+                    },
+                    { 
+                        label: "% NG/Tổng", 
+                        data: percNG, 
+                        type: "line", 
+                        borderColor: "#2980b9", 
+                        backgroundColor: "rgba(41, 128, 185, 0.1)", 
+                        yAxisID: "y1", 
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: "#2980b9",
+                        pointBorderColor: "#ffffff",
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        title: { display: true, text: "Số lượng" }
+                    },
+                    y1: { 
+                        position: "right", 
+                        beginAtZero: true, 
+                        max: 100, 
+                        title: { display: true, text: "% NG" }, 
+                        grid: { drawOnChartArea: false } 
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.dataset.label === '% NG/Tổng') {
+                                    label += context.parsed.y + '%';
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+        
+        console.log("✅ Biểu đồ đã vẽ thành công với", labels.length, "ngày");
+    } catch (error) {
+        console.error("❌ Lỗi vẽ biểu đồ:", error);
+    }
+}
+
+    // ===================== Window onload =====================
+    window.onload = function() {
+    loadReferenceData();      // Tải dữ liệu PRO
+    loadSauTestData();        // Tải dữ liệu Lắp Ráp
+    reloadFromGoogle();       // Tải dữ liệu QC
+    showTab(1);
+  
+    // Hiển thị giới hạn QR code ban đầu
+    const initialMahang = document.getElementById("mahang").value;
+    if (initialMahang) {
+    showQRLimitInfo(initialMahang);
+     }
+    };
+
+    // Auto refresh cả 3 datasets
+    setInterval(() => {
+      console.log("🔁 Auto refresh cả PRO, Lắp Ráp và QC data...");
+      loadReferenceData(true);
+      loadSauTestData(true);
+      reloadFromGoogle();
+    }, 1 * 60 * 1000); // 1 phút
+
+    // Hàm hiển thị thông báo tạm thời
+    function showTempNotification(message, duration = 3000) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #27ae60;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        z-index: 10000;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, duration);
+    }
+
+    // ===================== END =====================
+  </script>
+</body>
+</html>
