@@ -130,7 +130,7 @@
     <div class="tab-buttons">
       <button id="btnTab1" class="active" onclick="showTab(1)">📝 Phán định sản phẩm</button>
       <button id="btnTab2" onclick="showTab(2)">🧾 Dữ liệu PRO (TEST)</button>
-      <button id="btnTab3" onclick="showTab(3)">🔧 Lắp Ráp</button>
+      <button id="btnTab3" onclick="showTab(3)">🔧 PQC</button>
       <button id="btnTab4" onclick="showTab(4)">📑 Dữ liệu QC (OQC)</button>
       <button id="btnTab5" onclick="showTab(5)">📈 Biểu đồ</button>
     </div>
@@ -344,10 +344,10 @@
       <div id="refCount" style="margin-top:8px;font-weight:bold;"></div>
     </div>
       
-    <!-- Tab 3: Lắp Ráp -->
+    <!-- Tab 3: PQC -->
     <div id="tab3" class="tab-content">
-      <h3>🔧 DỮ LIỆU LẮP RÁP</h3>
-      <p class="ref-status" id="sauTestStatus">⏳ Đang chờ tải dữ liệu Lắp Ráp...</p>
+      <h3>🔧 DỮ LIỆU PQC</h3>
+      <p class="ref-status" id="sauTestStatus">⏳ Đang chờ tải dữ liệu PQC...</p>
       <div style="margin-bottom:10px;">
         <small>URL Lắp Ráp Sheet:</small>
         <div style="margin-top:6px;">
@@ -1249,7 +1249,7 @@
       document.getElementById("refCount").textContent = `Tổng PRO data: ${proData.length} dòng`;
     }
 
-    // ===================== HÀM TẢI DỮ LIỆU LẮP RÁP (SHEET 2) =======
+    // ===================== HÀM TẢI DỮ LIỆU PQC (SHEET 2) =======
     function loadSauTestData(silent = false) {
       const statusEl = document.getElementById("sauTestStatus");
       const previewEl = document.getElementById("sauTestUrlPreview");
@@ -1264,7 +1264,7 @@
 
       previewEl.value = LAP_RAP_SHEET_URL;
       if (!silent) {
-        statusEl.textContent = "⏳ Đang tải dữ liệu Lắp Ráp...";
+        statusEl.textContent = "⏳ Đang tải dữ liệu PQC...";
         statusEl.style.color = "black";
       }
 
@@ -1280,15 +1280,15 @@
           sauTestData = data;
           
           if (!silent) {
-            statusEl.textContent = `✅ Dữ liệu Lắp Ráp: ${sauTestData.length} dòng`;
+            statusEl.textContent = `✅ Dữ liệu PQC: ${sauTestData.length} dòng`;
             statusEl.style.color = "green";
           }
           
           renderSauTestTable();
         })
         .catch(err => {
-          console.error("Lỗi tải dữ liệu Lắp Ráp:", err);
-          statusEl.innerHTML = `❌ Lỗi tải dữ liệu Lắp Ráp: ${err.message}`;
+          console.error("Lỗi tải dữ liệu PQC:", err);
+          statusEl.innerHTML = `❌ Lỗi tải dữ liệu PQC: ${err.message}`;
           statusEl.style.color = "red";
         });
     }
@@ -1298,7 +1298,7 @@
       body.innerHTML = "";
 
       if (!Array.isArray(sauTestData) || sauTestData.length === 0) {
-        body.innerHTML = `<tr><td colspan="11" style="color:red;">❌ Không có dữ liệu Lắp Ráp</td></tr>`;
+        body.innerHTML = `<tr><td colspan="11" style="color:red;">❌ Không có dữ liệu PQC</td></tr>`;
         document.getElementById("sauTestCount").textContent = "0 dòng";
         return;
       }
@@ -1387,7 +1387,7 @@
         body.appendChild(tr);
       });
 
-      document.getElementById("sauTestCount").textContent = `Tổng Lắp Ráp data: ${sauTestData.length} dòng`;
+      document.getElementById("sauTestCount").textContent = `Tổng PQC data: ${sauTestData.length} dòng`;
     }
 
     // ===================== HÀM TẢI DỮ LIỆU QC (SHEET 3) - ĐÃ SỬA =======
@@ -1699,7 +1699,7 @@
       } else if (latestRecord.result === "NG") {
         switch(latestRecord.source) {
           case "PRO":
-            statusEl.textContent = "❌ TEST FAIL";
+            statusEl.textContent = "❌TEST FAIL";
             statusEl.style.color = "red";
             break;
           case "LAP_RAP":
@@ -1712,7 +1712,7 @@
             break;
         }
       } else {
-        statusEl.textContent = "❓ KẾT QUẢ KHÔNG RÕ";
+        statusEl.textContent = "❓ CHỜ TẢI DỮ LIỆU";
         statusEl.style.color = "orange";
       }
 
@@ -2186,7 +2186,7 @@
     // ===================== Window onload =====================
     window.onload = function() {
     loadReferenceData();      // Tải dữ liệu PRO
-    loadSauTestData();        // Tải dữ liệu Lắp Ráp
+    loadSauTestData();        // Tải dữ liệu PQC
     reloadFromGoogle();       // Tải dữ liệu QC
     showTab(1);
   
@@ -2199,7 +2199,7 @@
 
     // Auto refresh cả 3 datasets
     setInterval(() => {
-      console.log("🔁 Auto refresh cả PRO, Lắp Ráp và QC data...");
+      console.log("🔁 Auto refresh cả PRO, PQC và QC data...");
       loadReferenceData(true);
       loadSauTestData(true);
       reloadFromGoogle();
