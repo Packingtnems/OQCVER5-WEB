@@ -1471,356 +1471,207 @@
 
     // ======= HÀM KIỂM TRA TRẠNG THÁI QR (SO SÁNH 3 TAB) =======
     // HÀM SỬA LỖI - XỬ LÝ ĐÚNG THỜI GIAN TỪ GOOGLE SHEETS
-    function parseRecordDateTime(dateField, timeField) {
-  let dateRaw = (dateField || "").toString().trim();
-  let timeRaw = (timeField || "").toString().trim();
-
-  console.log("🔍 parseRecordDateTime input:", { dateField, timeField, dateRaw, timeRaw });
-
-  // TRƯỜNG HỢP 1: CÓ CẢ 2 TIMESTAMP (dateField có ngày thực, timeField có giờ từ 1899)
-  if (dateRaw.includes("T") && timeRaw.includes("1899-12-30")) {
-    try {
-      // Lấy ngày từ dateField (ngày thực)
-      const datePart = new Date(dateRaw);
-      // Lấy giờ từ timeField (giờ từ timestamp 1899)
-      const timePart = new Date(timeRaw);
-      
-      if (!isNaN(datePart.getTime()) && !isNaN(timePart.getTime())) {
-        // Kết hợp ngày thực + giờ thực
-        const resultDate = new Date(datePart);
-        resultDate.setHours(
-          timePart.getHours(),
-          timePart.getMinutes(), 
-          timePart.getSeconds(),
-          0
-        );
-        
-        console.log("✅ Đã kết hợp ngày thực + giờ thực:", { 
-          dateField, 
-          timeField,
-          result: resultDate 
-        });
-        
-        return resultDate;
-      }
-    } catch (e) {
-      console.error("Lỗi kết hợp timestamp:", e);
-    }
-  }
-
-  // TRƯỜNG HỢP 2: CHỈ CÓ TIMESTAMP GIỜ (1899-12-30) - SỬA LỖI 1899-12-29
-  if (dateRaw.includes("1899-12-30") || dateRaw.includes("1899-12-29") || 
-      timeRaw.includes("1899-12-30") || timeRaw.includes("1899-12-29")) {
-    const raw = dateRaw.includes("1899-12-30") || dateRaw.includes("1899-12-29") ? dateRaw : timeRaw;
-    const d = new Date(raw);
     
-    if (!isNaN(d.getTime())) {
-      // Lấy giờ, phút, giây từ timestamp
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      const ss = String(d.getSeconds()).padStart(2, "0");
-      
-      // Tạo đối tượng Date với ngày hiện tại và giờ thực
-      const resultDate = new Date();
-      resultDate.setHours(hh, mm, ss, 0);
-      
-      console.log("✅ Đã xử lý timestamp 1899:", { 
-        input: raw, 
-        output: resultDate,
-        time: `${hh}:${mm}:${ss}`
-      });
-      
-      return resultDate;
-    }
-  }
-
-  // TRƯỜNG HỢP 3: DATE FIELD CÓ NGÀY THỰC (không có timeField hoặc timeField rỗng)
-  if (dateRaw.includes("T") && (!timeRaw || timeRaw === "")) {
-    const d = new Date(dateRaw);
-    if (!isNaN(d.getTime())) {
-      console.log("✅ Đã xử lý dateField có ngày thực:", { dateRaw, result: d });
-      return d;
-    }
-  }
-
-  // TRƯỜNG HỢP 4: DATE FIELD CÓ NGÀY THỰC + TIMEFIELD CÓ GIỜ ĐƠN GIẢN (HH:MM:SS)
-  if (dateRaw.includes("T") && timeRaw.match(/^\d{1,2}:\d{1,2}:\d{1,2}$/)) {
-    try {
-      const datePart = new Date(dateRaw);
-      const timeParts = timeRaw.split(":").map(x => parseInt(x) || 0);
-      const [hh, mm, ss] = timeParts.slice(0, 3);
-      
-      if (!isNaN(datePart.getTime())) {
-        const resultDate = new Date(datePart);
-        resultDate.setHours(hh, mm, ss, 0);
-        
-        console.log("✅ Đã kết hợp ngày thực + giờ đơn giản:", { 
-          dateRaw, 
-          timeRaw,
-          result: resultDate 
-        });
-        
-        return resultDate;
-      }
-    } catch (e) {
-      console.error("Lỗi kết hợp ngày thực + giờ đơn giản:", e);
-    }
-  }
-
-  // XỬ LÝ CÁC ĐỊNH DẠNG KHÁC (giữ nguyên logic cũ)
-  // dd/mm/yyyy + HH:MM:SS
-  const vnFormat = dateRaw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (vnFormat && timeRaw) {
-    const [_, day, month, year] = vnFormat;
-    const timeParts = timeRaw.split(":").map(x => parseInt(x) || 0);
-    const [hh, mm, ss] = timeParts.slice(0, 3);
-    
-    const result = new Date(year, month - 1, day, hh, mm, ss);
-    console.log("✅ Đã xử lý định dạng VN:", { dateRaw, timeRaw, result });
-    return result;
-  }
-
-  // yyyy-mm-dd + HH:MM:SS
-  const isoFormat = dateRaw.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-  if (isoFormat && timeRaw) {
-    const [_, year, month, day] = isoFormat;
-    const timeParts = timeRaw.split(":").map(x => parseInt(x) || 0);
-    const [hh, mm, ss] = timeParts.slice(0, 3);
-    
-    const result = new Date(year, month - 1, day, hh, mm, ss);
-    console.log("✅ Đã xử lý định dạng ISO:", { dateRaw, timeRaw, result });
-    return result;
-  }
-
-  // Fallback: thử parse trực tiếp
-  if (dateRaw && timeRaw) {
-    const combined = `${dateRaw} ${timeRaw}`;
-    const d = new Date(combined);
-    if (!isNaN(d.getTime())) {
-      console.log("✅ Đã parse trực tiếp:", { combined, result: d });
-      return d;
-    }
-  }
-
-  // Fallback 2: chỉ parse date nếu time rỗng
-  if (dateRaw && (!timeRaw || timeRaw === "")) {
-    const d = new Date(dateRaw);
-    if (!isNaN(d.getTime())) {
-      console.log("✅ Đã parse chỉ date:", { dateRaw, result: d });
-      return d;
-    }
-  }
-
-  console.warn("❌ Không thể parse datetime:", { dateRaw, timeRaw });
-  return null;
-}
     // HÀM KIỂM TRA QR STATUS MỚI - SO SÁNH 3 TAB
     // HÀM KIỂM TRA QR STATUS MỚI - SO SÁNH 3 TAB
+// ======= HÀM KIỂM TRA TRẠNG THÁI QR - ĐÃ SỬA XỬ LÝ TIMESTAMP =======
 function checkQRStatus(qrcode) {
-  const statusEl = document.getElementById("qrStatus");
-  const sourceEl = document.getElementById("qrSource");
-  if (!statusEl) return;
-  if (!qrcode) {
-    statusEl.textContent = "";
-    if (sourceEl) sourceEl.textContent = "";
-    return;
-  }
-
-  const code = qrcode.trim().toUpperCase();
-
-  console.log("=== 🚨 DEBUG QR STATUS ===");
-  console.log("QR Code:", code);
-
-  // Kiểm tra xem đã tải đủ dữ liệu chưa (chỉ cần 1 dataset có dữ liệu)
-  const hasAnyData = (Array.isArray(proData) && proData.length > 0) || 
-                    (Array.isArray(sauTestData) && sauTestData.length > 0) || 
-                    (Array.isArray(qcData) && qcData.length > 0);
-
-  if (!hasAnyData) {
-    statusEl.textContent = "⚠️ Chưa tải đủ dữ liệu!";
-    statusEl.style.color = "#e67e22";
-    if (sourceEl) sourceEl.textContent = "";
-    return;
-  }
-
-  // Tìm tất cả bản ghi của QR code này trong 3 datasets
-  const normalizeQR = (qr) => {
-    if (!qr) return "";
-    return qr.toString().trim().toUpperCase().replace(/\s+/g, '');
-  };
-
-  const normalizedCode = normalizeQR(code);
-
-  const proRecords = proData.filter(r =>
-    normalizeQR(r["QR Code"] || r["QR code"] || r.qrCode || r.qr) === normalizedCode
-  );
-  const sauTestRecords = sauTestData.filter(r =>
-    normalizeQR(r["QR Code"] || r["QR code"] || r.qrCode || r.qr) === normalizedCode
-  );
-  const qcRecords = qcData.filter(r =>
-    normalizeQR(r["QR Code"] || r["QR code"] || r.qrCode || r.qr) === normalizedCode
-  );
-
-  console.log("📊 Records found:", {
-    PRO: proRecords.length,
-    PQC: sauTestRecords.length, 
-    QC: qcRecords.length
-  });
-
-  // Nếu không có bản ghi nào
-  if (proRecords.length === 0 && sauTestRecords.length === 0 && qcRecords.length === 0) {
-    statusEl.textContent = "🆕 CHƯA TEST";
-    statusEl.style.color = "red";
-    if (sourceEl) sourceEl.textContent = "";
-    return;
-  }
-
-  // TẠO MẢNG TẤT CẢ BẢN GHI VÀ SẮP XẾP THEO THỜI GIAN
-  const allRecords = [];
-
-  // Thêm bản ghi từ PRO
-  proRecords.forEach(r => {
-    const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
-    if (dt) {
-      allRecords.push({
-        source: "PRO",
-        result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
-        datetime: dt,
-        rawDate: r["Ngày"] || r.ngay,
-        rawTime: r["Giờ"] || r.gio,
-        rawData: r // Thêm toàn bộ dữ liệu để debug
-      });
-      console.log("✅ PRO Record:", { 
-        source: "PRO", 
-        result: r["Phán định"] || r["Kết quả"],
-        datetime: dt,
-        date: r["Ngày"] || r.ngay,
-        time: r["Giờ"] || r.gio
-      });
+    const statusEl = document.getElementById("qrStatus");
+    const sourceEl = document.getElementById("qrSource");
+    
+    if (!qrcode) {
+        statusEl.textContent = "";
+        if (sourceEl) sourceEl.textContent = "";
+        return;
     }
-  });
 
-  // Thêm bản ghi từ Lắp Ráp
-  sauTestRecords.forEach(r => {
-    const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
-    if (dt) {
-      allRecords.push({
-        source: "LAP_RAP", 
-        result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
-        datetime: dt,
-        rawDate: r["Ngày"] || r.ngay,
-        rawTime: r["Giờ"] || r.gio,
-        rawData: r
-      });
-      console.log("✅ PQC Record:", { 
-        source: "LAP_RAP",
-        result: r["Phán định"] || r["Kết quả"],
-        datetime: dt,
-        date: r["Ngày"] || r.ngay,
-        time: r["Giờ"] || r.gio
-      });
-    }
-  });
+    const code = qrcode.trim().toUpperCase();
+    console.log("🔍 Đang kiểm tra QR:", code);
 
-  // Thêm bản ghi từ QC
-  qcRecords.forEach(r => {
-    const dt = parseRecordDateTime(r["Ngày"] || r.ngay, r["Giờ"] || r.gio);
-    if (dt) {
-      allRecords.push({
-        source: "QC",
-        result: ((r["Phán định"] || r["Kết quả"] || r.phanDinh || "") + "").toString().trim().toUpperCase(),
-        datetime: dt,
-        rawDate: r["Ngày"] || r.ngay,
-        rawTime: r["Giờ"] || r.gio,
-        rawData: r
-      });
-      console.log("✅ QC Record:", { 
-        source: "QC",
-        result: r["Phán định"] || r["Kết quả"], 
-        datetime: dt,
-        date: r["Ngày"] || r.ngay,
-        time: r["Giờ"] || r.gio
-      });
-    }
-  });
+    // HÀM CHUYỂN ĐỔI TIMESTAMP CHÍNH XÁC
+    const parseDateTime = (dateValue, timeValue) => {
+        console.log("📅 Raw timestamp - Date:", dateValue, "Time:", timeValue);
 
-  console.log("📅 All records before sort:", allRecords);
+        let finalDate = new Date();
 
-  // Sắp xếp theo thời gian (mới nhất trước)
-  allRecords.sort((a, b) => b.datetime.getTime() - a.datetime.getTime());
+        // XỬ LÝ TIMESTAMP CỦA NGÀY
+        if (dateValue) {
+            try {
+                if (typeof dateValue === 'string' && dateValue.includes('T')) {
+                    const date = new Date(dateValue);
+                    if (!isNaN(date.getTime())) {
+                        finalDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                        console.log("✅ Đã parse ngày từ timestamp:", finalDate.toLocaleDateString("vi-VN"));
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi parse timestamp ngày:", e);
+            }
+        }
 
-  console.log("📅 All records after sort:", allRecords);
+        // XỬ LÝ TIMESTAMP CỦA GIỜ - QUAN TRỌNG!
+        if (timeValue) {
+            try {
+                if (typeof timeValue === 'string' && timeValue.includes('T')) {
+                    const timeDate = new Date(timeValue);
+                    if (!isNaN(timeDate.getTime())) {
+                        // Lấy giờ, phút, giây từ timestamp của giờ
+                        const hours = timeDate.getHours();
+                        const minutes = timeDate.getMinutes();
+                        const seconds = timeDate.getSeconds();
+                        
+                        finalDate.setHours(hours, minutes, seconds);
+                        console.log("✅ Đã set giờ từ timestamp:", hours + ":" + minutes + ":" + seconds);
+                    }
+                } else if (typeof timeValue === 'string') {
+                    // Nếu là chuỗi giờ bình thường (HH:mm:ss)
+                    const timeMatch = timeValue.match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+                    if (timeMatch) {
+                        const hours = parseInt(timeMatch[1]);
+                        const minutes = parseInt(timeMatch[2]);
+                        const seconds = parseInt(timeMatch[3]);
+                        finalDate.setHours(hours, minutes, seconds);
+                        console.log("✅ Đã set giờ từ chuỗi:", hours + ":" + minutes + ":" + seconds);
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi parse timestamp giờ:", e);
+            }
+        }
 
-  // Lấy bản ghi mới nhất
-  const latestRecord = allRecords[0];
-  if (!latestRecord) {
-    statusEl.textContent = "❓ KHÔNG XÁC ĐỊNH";
-    statusEl.style.color = "orange";
-    return;
-  }
+        console.log("✅ Kết quả datetime cuối cùng:", finalDate.toLocaleString("vi-VN"));
+        return finalDate;
+    };
 
-  console.log("🏆 LATEST RECORD SELECTED:", latestRecord);
+    // TÌM TẤT CẢ BẢN GHI CỦA QR CODE NÀY
+    const allRecords = [];
+    
+    // Hàm tìm kiếm trong dataset
+    const searchInDataset = (dataset, sourceName) => {
+        dataset.forEach(record => {
+            try {
+                const recordQR = (
+                    record["QR Code"] || 
+                    record["QR code"] || 
+                    record.qrCode || 
+                    record.qr || 
+                    ""
+                ).toString().trim().toUpperCase();
+                
+                if (recordQR === code) {
+                    // Lấy timestamp từ các cột
+                    const rawDate = record["Ngày"] || record.ngay || record.Date || record.date;
+                    const rawTime = record["Giờ"] || record.gio || record.Time || record.time;
+                    
+                    console.log(`🔍 ${sourceName} - Timestamp:`, {
+                        date: rawDate,
+                        time: rawTime,
+                        fullRecord: record
+                    });
+                    
+                    const datetime = parseDateTime(rawDate, rawTime);
+                    
+                    if (datetime) {
+                        allRecords.push({
+                            source: sourceName,
+                            result: (record["Phán định"] || record["Kết quả"] || record.phanDinh || "").toString().trim().toUpperCase(),
+                            datetime: datetime,
+                            rawDate: rawDate,
+                            rawTime: rawTime,
+                            fullRecord: record
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error(`Lỗi xử lý record trong ${sourceName}:`, e);
+            }
+        });
+    };
 
-  // LOGIC HIỂN THỊ THEO KẾT QUẢ MỚI NHẤT
-  if (latestRecord.result === "OK") {
-    switch(latestRecord.source) {
-      case "PRO":
-        statusEl.textContent = "✅ ĐÃ PASS TEST";
-        statusEl.style.color = "green";
-        break;
-      case "LAP_RAP":
-        statusEl.textContent = "🔧 LẮP RÁP ĐÃ SỬA";
-        statusEl.style.color = "green";
-        break;
-      case "QC":
-        statusEl.textContent = "📑 QC PASS";
-        statusEl.style.color = "green";
-        break;
-    }
-  } else if (latestRecord.result === "NG") {
-    switch(latestRecord.source) {
-      case "PRO":
-        statusEl.textContent = "❌ TEST FAIL";
+    // Tìm trong cả 3 datasets
+    console.log("🔍 Bắt đầu tìm kiếm...");
+    searchInDataset(proData, "PRO");
+    searchInDataset(sauTestData, "PQC");
+    searchInDataset(qcData, "QC");
+
+    console.log("📊 Tổng số bản ghi tìm thấy:", allRecords.length, allRecords);
+
+    // SẮP XẾP THEO THỜI GIAN MỚI NHẤT
+    allRecords.sort((a, b) => b.datetime.getTime() - a.datetime.getTime());
+    
+    // LẤY BẢN GHI GẦN NHẤT
+    const latestRecord = allRecords[0];
+
+    if (!latestRecord) {
+        statusEl.textContent = "🆕 CHƯA TEST";
         statusEl.style.color = "red";
-        break;
-      case "LAP_RAP":
-        statusEl.textContent = "🔧 LẮP RÁP CHƯA SỬA";
-        statusEl.style.color = "red";
-        break;
-      case "QC":
-        statusEl.textContent = "📑 QC FAIL";
-        statusEl.style.color = "red";
-        break;
+        if (sourceEl) sourceEl.textContent = "";
+        return;
     }
-  } else {
-    statusEl.textContent = "❓ CHỜ TẢI DỮ LIỆU";
-    statusEl.style.color = "orange";
-  }
 
-  // Hiển thị thông tin nguồn và thời gian
-  if (sourceEl) {
-    const sourceText = latestRecord.source === "PRO" ? "PRO" : 
-                      latestRecord.source === "LAP_RAP" ? "Lắp Ráp" : "QC";
-    const timeText = latestRecord.datetime.toLocaleString("vi-VN");
-    sourceEl.textContent = `${sourceText}: ${timeText}`;
-  }
+    console.log("🏆 Bản ghi gần nhất:", latestRecord);
 
-  // KIỂM TRA TRẠNG THÁI RE-TEST
-  if (latestRecord.result === "NG") {
-    // Tìm xem có bản ghi OK nào sau thời điểm NG không
-    const hasRetest = allRecords.some(record => 
-      record.result === "OK" && record.datetime > latestRecord.datetime
-    );
+    // HIỂN THỊ KẾT QUẢ
+    let statusText = "";
+    let statusColor = "black";
 
-    if (hasRetest) {
-      statusEl.textContent += " → ĐÃ RE-TEST";
-      statusEl.style.color = "blue";
+    if (latestRecord.result === "OK") {
+        statusColor = "green";
+        switch(latestRecord.source) {
+            case "PRO": statusText = "✅ ĐÃ PASS TEST"; break;
+            case "PQC": statusText = "🔧 PQC PASS"; break;
+            case "QC": statusText = "📑 QC PASS"; break;
+        }
+    } else if (latestRecord.result === "NG") {
+        statusColor = "red";
+        switch(latestRecord.source) {
+            case "PRO": statusText = "❌ TEST FAIL"; break;
+            case "PQC": statusText = "🔧 PQC FAIL"; break;
+            case "QC": statusText = "📑 QC FAIL"; break;
+        }
+
+        // KIỂM TRA RE-TEST
+        const hasRetest = allRecords.some(record => 
+            record.result === "OK" && record.datetime > latestRecord.datetime
+        );
+
+        if (hasRetest) {
+            statusText += " → ĐÃ RE-TEST";
+            statusColor = "blue";
+        } else {
+            statusText += " → CHƯA RE-TEST";
+        }
     } else {
-      statusEl.textContent += " → CHƯA RE-TEST";
+        statusText = "❓ KHÔNG XÁC ĐỊNH";
+        statusColor = "orange";
     }
-  }
 
-  console.log("=== 🏁 END DEBUG ===");
+    statusEl.textContent = statusText;
+    statusEl.style.color = statusColor;
+
+    // HIỂN THỊ THÔNG TIN NGUỒN VÀ THỜI GIAN CHÍNH XÁC
+    if (sourceEl) {
+        const displayTime = latestRecord.datetime.toLocaleString("vi-VN", {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        sourceEl.textContent = `${latestRecord.source}: ${displayTime}`;
+        
+        // Debug thông tin timestamp
+        console.log("🔍 DEBUG TIMESTAMP:", {
+            source: latestRecord.source,
+            rawDate: latestRecord.rawDate,
+            rawTime: latestRecord.rawTime,
+            parsedDate: latestRecord.datetime.toLocaleDateString("vi-VN"),
+            parsedTime: latestRecord.datetime.toLocaleTimeString("vi-VN"),
+            finalDisplay: displayTime
+        });
+    }
 }
     // ===================== REPORT & CHARTS (main sheet) =====================
     let paretoChart, dailyChart;
