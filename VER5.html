@@ -116,6 +116,14 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+        /* THÊM ĐOẠN NÀY VÀO CUỐI PHẦN STYLE */
+    #okBtn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+        background-color: #95a5a6;
+        border-color: #7f8c8d;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/clusterize.js@0.18.1/clusterize.min.js"></script>
@@ -578,7 +586,10 @@
     document.getElementById("mahang").addEventListener("change", function() {
   showQRLimitInfo(this.value);
    });
-
+    // THÊM SỰ KIỆN NÀY
+document.getElementById("loi").addEventListener("input", function() {
+    toggleOkButton();
+});
    function showQRLimitInfo(mahang) {
   const limit = qrCodeLimits[mahang] || 50;
   const infoElement = document.getElementById("qrLimitInfo");
@@ -627,7 +638,18 @@
         console.error("Lỗi khi load qrCounter từ localStorage:", e);
       }
     }
-
+    function toggleOkButton() {
+       const loiInput = document.getElementById("loi");
+       const okButton = document.getElementById("okBtn");
+       
+       if (loiInput.value.trim() !== "") {
+           // Nếu có dữ liệu lỗi, làm mờ và vô hiệu hóa nút OK
+           okButton.classList.add("disabled");
+       } else {
+           // Nếu không có lỗi, bình thường
+           okButton.classList.remove("disabled");
+       }
+   }
     // ===================== Utility =====================
     function findLastRecordIndex(qrcode) {
       for (let i = records.length - 1; i >= 1; i--) {
@@ -784,7 +806,7 @@
   document.getElementById("qrcode").value = "";
   document.getElementById("loi").value = "";
   document.getElementById("ghichu").value = "";
-  
+  toggleOkButton(); // Khôi phục nút OK sau khi lưu
   deliveryCounter++;
   document.getElementById("deliveryStatus").textContent = `Đã quét ${deliveryCounter}/${deliveryTarget}`;
 
@@ -1081,6 +1103,7 @@
       renderTable();
       recomputeCountsForShift(currentShift || "");
       alert("✅ Đã reset dữ liệu. Bản backup đã lưu vào localStorage với key: " + backupKey);
+       toggleOkButton();
     }
 
     // ===================== Xóa 1 dòng =====================
@@ -2130,6 +2153,7 @@ function checkQRStatus(qrcode) {
     if (initialMahang) {
     showQRLimitInfo(initialMahang);
      }
+    toggleOkButton();
     };
 
     // Auto refresh cả 3 datasets
