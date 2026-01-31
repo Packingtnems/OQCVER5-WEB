@@ -681,6 +681,7 @@
 
     let deliveryTarget = 0;
     let deliveryCounter = 0;
+    let deliveryBatch = []; // 🔥 QR thuộc lô mục tiêu hiện tại
 
     // Load từ localStorage (records + qrCounter)
     if (localStorage.getItem("records")) {
@@ -776,14 +777,18 @@
     }
 
     document.getElementById("deliveryQty").addEventListener("input", ()=>{
-      deliveryTarget = parseInt(document.getElementById("deliveryQty").value) || 0;
-      deliveryCounter = 0;
-      if (deliveryTarget > 0) {
-        document.getElementById("deliveryStatus").textContent = `🔄 Đã đặt mục tiêu: ${deliveryTarget}`;
-      } else {
-        document.getElementById("deliveryStatus").textContent = "";
-      }
-    });
+  deliveryTarget = parseInt(document.getElementById("deliveryQty").value) || 0;
+  deliveryCounter = 0;
+  deliveryBatch = []; // 🔥 reset batch mới
+
+  if (deliveryTarget > 0) {
+    document.getElementById("deliveryStatus").textContent =
+      `🎯 Tiến độ: ${deliveryCounter}/${deliveryTarget}`;
+  } else {
+    document.getElementById("deliveryStatus").textContent = "";
+  }
+});
+
 
     // ===================== Save / Update log =====================
     function saveData(result) {
@@ -886,16 +891,26 @@
         document.getElementById("loi").value = "";
         document.getElementById("ghichu").value = "";
         toggleOkButton(); // Khôi phục nút OK sau khi lưu
-        deliveryCounter++;
-        document.getElementById("deliveryStatus").textContent = `Đã quét ${deliveryCounter}/${deliveryTarget}`;
+        // 🔥 Thêm QR vào batch nếu chưa có
+if (!deliveryBatch.includes(qrcode)) {
+  deliveryBatch.push(qrcode);
+}
+
+deliveryCounter = deliveryBatch.length;
+
+document.getElementById("deliveryStatus").textContent =
+  `🎯 Tiến độ: ${deliveryCounter}/${deliveryTarget}`;
+
 
         if (deliveryCounter >= deliveryTarget) {
-            alert(`✅ Đã đủ ${deliveryTarget} sản phẩm!`);
-            document.getElementById("deliveryQty").value = 0;
-            deliveryTarget = 0;
-            deliveryCounter = 0;
-            document.getElementById("deliveryStatus").textContent = "";
-        }
+  alert(`✅ Đã đủ ${deliveryTarget} sản phẩm!`);
+  document.getElementById("deliveryQty").value = 0;
+  deliveryTarget = 0;
+  deliveryCounter = 0;
+  deliveryBatch = []; // 🔥 reset batch
+  document.getElementById("deliveryStatus").textContent = "";
+}
+
 
         const qEl = document.getElementById("qrcode");
         if (qEl) {
@@ -1197,6 +1212,16 @@
 
       const removed = records.splice(index, 1)[0];
       const removedQr = removed[1];
+      // 🔥 Nếu QR thuộc batch hiện tại → giảm tiến độ
+const batchIndex = deliveryBatch.indexOf(removedQr);
+if (batchIndex !== -1) {
+  deliveryBatch.splice(batchIndex, 1);
+  deliveryCounter = deliveryBatch.length;
+
+  document.getElementById("deliveryStatus").textContent =
+    `🎯 Tiến độ: ${deliveryCounter}/${deliveryTarget}`;
+}
+
       
       recomputeCountsForShift(currentShift);
       
