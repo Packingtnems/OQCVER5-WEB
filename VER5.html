@@ -682,6 +682,40 @@
     let deliveryTarget = 0;
     let deliveryCounter = 0;
 
+    // ===================== HÀM TÍNH LẠI DELIVERY COUNTER =====================
+function recalculateDeliveryCounter() {
+    if (deliveryTarget === 0) {
+        deliveryCounter = 0;
+        updateDeliveryStatus();
+        return;
+    }
+    
+    // Đếm số QR code độc nhất đã quét trong ca/WO hiện tại và chưa sync
+    let uniqueQRs = new Set();
+    
+    for (let i = records.length - 1; i >= 1; i--) {
+        const row = records[i];
+        if (row[8] === currentShift && row[9] === currentWO && row[11] === false) {
+            uniqueQRs.add(row[1]);
+        }
+    }
+    
+    deliveryCounter = Math.min(uniqueQRs.size, deliveryTarget);
+    updateDeliveryStatus();
+}
+
+function updateDeliveryStatus() {
+    const statusEl = document.getElementById("deliveryStatus");
+    if (!statusEl) return;
+    
+    if (deliveryTarget > 0) {
+        statusEl.textContent = `Đã quét ${deliveryCounter}/${deliveryTarget}`;
+        statusEl.style.color = deliveryCounter >= deliveryTarget ? "red" : "blue";
+    } else {
+        statusEl.textContent = "";
+    }
+}
+
     // Load từ localStorage (records + qrCounter)
     if (localStorage.getItem("records")) {
       try { 
@@ -763,6 +797,11 @@
         currentUser = u;
         currentShift = s;
         currentWO = wo;
+                // Reset delivery counter khi đăng nhập mới
+        deliveryTarget = 0;
+        deliveryCounter = 0;
+        document.getElementById("deliveryQty").value = 0;
+        updateDeliveryStatus();
         document.getElementById("currentUser").textContent = currentUser;
         document.getElementById("currentShift").textContent = currentShift;
         document.getElementById("currentWO").textContent = currentWO;
@@ -776,37 +815,62 @@
     }
 
     document.getElementById("deliveryQty").addEventListener("input", ()=>{
-      deliveryTarget = parseInt(document.getElementById("deliveryQty").value) || 0;
-      deliveryCounter = 0;
-      if (deliveryTarget > 0) {
-        document.getElementById("deliveryStatus").textContent = `🔄 Đã đặt mục tiêu: ${deliveryTarget}`;
-      } else {
+    deliveryTarget = parseInt(document.getElementById("deliveryQty").value) || 0;
+    
+    // Tính lại counter dựa trên dữ liệu hiện có
+    recalculateDeliveryCounter();
+    
+    if (deliveryTarget > 0) {
+        updateDeliveryStatus();
+    } else {
         document.getElementById("deliveryStatus").textContent = "";
-      }
-    });
+    }
+});
 
     // ===================== Save / Update log =====================
     function saveData(result) {
-        // Kiểm tra số lượng giao
-        if (deliveryTarget === 0) {
-            alert("⚠️ Vui lòng nhập SỐ LƯỢNG GIAO trước khi quét!");
-            return;
-        }
+    // Lấy giá trị từ input TRƯỚC khi kiểm tra
+    const mahang = document.getElementById("mahang").value.trim().toUpperCase();
+    const qrcode = document.getElementById("qrcode").value.trim().toUpperCase();
+    const loi = document.getElementById("loi").value.trim();
+    const ghichu = document.getElementById("ghichu").value.trim();
 
-        if (deliveryCounter >= deliveryTarget) {
-            alert("⚠️ Đã đủ số lượng giao, không thể quét thêm!");
-            return;
-        }
+    // Kiểm tra số lượng giao
+    if (deliveryTarget === 0) {
+        alert("⚠️ Vui lòng nhập SỐ LƯỢNG GIAO trước khi quét!");
+        return;
+    }
 
-        const mahang = document.getElementById("mahang").value.trim().toUpperCase();
-        const qrcode = document.getElementById("qrcode").value.trim().toUpperCase();
-        const loi = document.getElementById("loi").value.trim();
-        const ghichu = document.getElementById("ghichu").value.trim();
-
-        if (!mahang || !qrcode) {
-            document.getElementById("error").textContent = "⚠️ Vui lòng nhập Mã hàng và QR Code!";
-            return;
+    // Tính số QR code độc nhất đã quét trong ca/WO hiện tại
+    let uniqueScannedQRs = new Set();
+    for (let i = 1; i < records.length; i++) {
+        const row = records[i];
+        if (row[8] === currentShift && row[9] === currentWO && row[11] === false) {
+            uniqueScannedQRs.add(row[1]);
         }
+    }
+
+    // Kiểm tra nếu đã đủ số lượng
+    if (uniqueScannedQRs.size >= deliveryTarget) {
+        alert(`⚠️ Đã đủ ${deliveryTarget} sản phẩm! Không thể quét thêm.`);
+        return;
+    }
+
+    // Kiểm tra nếu QR code đã tồn tại
+    if (uniqueScannedQRs.has(qrcode)) {
+        alert(`⚠️ QR code ${qrcode} đã được quét trong ca này!`);
+        document.getElementById("qrcode").value = "";
+        document.getElementById("qrcode").focus();
+        checkQRStatus("");
+        updateQRCharCount();
+        return;
+    }
+
+    // Kiểm tra dữ liệu đầu vào
+    if (!mahang || !qrcode) {
+        document.getElementById("error").textContent = "⚠️ Vui lòng nhập Mã hàng và QR Code!";
+        return;
+    }
         
         // KIỂM TRA ĐỘ DÀI QR CODE (CẢ QUÁ NGẮN VÀ QUÁ DÀI)
         const limit = qrCodeLimits[mahang] || DEFAULT_QR_LIMIT;
@@ -886,17 +950,20 @@
         document.getElementById("loi").value = "";
         document.getElementById("ghichu").value = "";
         toggleOkButton(); // Khôi phục nút OK sau khi lưu
-        deliveryCounter++;
+       // Không cần tăng counter thủ công, sẽ tính lại ở cuối hàm
         document.getElementById("deliveryStatus").textContent = `Đã quét ${deliveryCounter}/${deliveryTarget}`;
 
-        if (deliveryCounter >= deliveryTarget) {
-            alert(`✅ Đã đủ ${deliveryTarget} sản phẩm!`);
-            document.getElementById("deliveryQty").value = 0;
-            deliveryTarget = 0;
-            deliveryCounter = 0;
-            document.getElementById("deliveryStatus").textContent = "";
-        }
+        // Tính lại số lượng đã quét
+recalculateDeliveryCounter();
 
+// Kiểm tra nếu đã đủ số lượng
+if (deliveryCounter >= deliveryTarget) {
+    alert(`✅ Đã đủ ${deliveryTarget} sản phẩm!`);
+    document.getElementById("deliveryQty").value = 0;
+    deliveryTarget = 0;
+    deliveryCounter = 0;
+    updateDeliveryStatus();
+}
         const qEl = document.getElementById("qrcode");
         if (qEl) {
             qEl.focus();
@@ -1177,6 +1244,11 @@
       records = [["Mã hàng","QR Code","Kết quả","Lỗi","Giờ","Ngày","Số lần xuất hiện","Người kiểm tra","Ca","WO","Ghi chú"]];
       qrCounter = {};
       okCount = 0; ngCount = 0;
+          // Reset delivery counter
+    deliveryTarget = 0;
+    deliveryCounter = 0;
+    document.getElementById("deliveryQty").value = 0;
+    updateDeliveryStatus();
       saveLocal();
 
       renderTable();
@@ -1202,6 +1274,8 @@
       
       saveLocal();
       renderTable();
+          // Tính lại delivery counter
+    recalculateDeliveryCounter();
     }
 
     // ===================== HÀM TẢI DỮ LIỆU PRO (SHEET 1) =======
@@ -2232,6 +2306,8 @@
             showQRLimitInfo(initialMahang);
         }
         toggleOkButton();
+           // Tính lại delivery counter từ dữ liệu hiện có
+    recalculateDeliveryCounter();
         
         // Thêm sự kiện cho input QR code
         document.getElementById("qrcode").addEventListener("input", updateQRCharCount);
