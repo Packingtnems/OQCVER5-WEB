@@ -895,6 +895,7 @@
         document.getElementById("ghichu").value = "";
         const qEl = document.getElementById("qrcode");
         if (qEl) { qEl.focus(); qEl.select(); }
+        toggleOkButton();
 
         // --- GỬI LÊN SHEET ---
         fetch(QC_SHEET_URL, {
@@ -905,6 +906,8 @@
         })
         .then(() => {
             console.log("✅ Đã gửi dòng mới");
+            newRow[11] = true; 
+            saveLocal();
             reloadFromGoogle(); // Tải lại để lần quét sau đếm chính xác
         })
         .catch(err => console.error("❌ Lỗi Sheet:", err));
