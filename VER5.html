@@ -496,7 +496,7 @@
     // ===================== CẤU HÌNH 3 GOOGLE SHEETS =====================
     const PRO_SHEET_URL = "https://script.google.com/macros/s/AKfycbwGCEDo7faBhEh9FCv1ZlrfINyAvfwIg9EbXk-CqwZRYBKVOQJP2hIGjI02JbeWIYJC5A/exec";
     const LAP_RAP_SHEET_URL = "https://script.google.com/macros/s/AKfycbylfaBg90qt9o8fWu83cevhmAXKn3Azg1ivs0NLC62TxtSKlDvT4xuuiO00y1mUPQI9nw/exec";
-    const QC_SHEET_URL = "https://script.google.com/macros/s/AKfycbwOt6HhlzmBT2PbhA_0qfwF7rlcrJ4XVPVQcPlh4YeswQ90DQ6rDYmCZl8OV6kqUtV1/exec";
+    const QC_SHEET_URL = "https://script.google.com/macros/s/AKfycbwr8D12eLX7z9y41Iy8KCHz4b5xQXfHmy5JdzWc4wryeu9p6rviwWWpxQ64ZSW-IO6c-g/exec";
 
     // Biến toàn cục cho 3 datasets
     let proData = [];      // Dữ liệu từ Sheet 1 (PRO)
@@ -909,11 +909,11 @@
         toggleOkButton();
 
         // --- GỬI LÊN SHEET ---
+        // --- GỬI LÊN SHEET ---
         fetch(QC_SHEET_URL, {
             method: "POST",
             body: JSON.stringify([newRow]),
-            headers: { "Content-Type": "application/json" },
-            mode: "no-cors"
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
         })
         .then(() => {
             console.log("✅ Đã gửi dòng mới");
@@ -921,8 +921,9 @@
             saveLocal();
             reloadFromGoogle(); // Tải lại để lần quét sau đếm chính xác
         })
-        .catch(err => console.error("❌ Lỗi Sheet:", err));
-
+        .catch(err => {
+            console.warn("⚠️ Mất mạng hoặc server từ chối, đã lưu offline chờ đồng bộ:", err);
+        });
         checkQRStatus("");
         updateQRCharCount();
     }
@@ -985,15 +986,6 @@
       return false;
     }
 
-    function checkIfHasPreviousNG(qrcode, currentIndex) {
-      for (let i = currentIndex - 1; i >= 1; i--) {
-        if (records[i][1] === qrcode && records[i][2] === "NG") {
-          return true;
-        }
-      }
-      return false;
-    }
-
     // ===================== Lưu local =====================
     function saveLocal() {
       try {
@@ -1047,45 +1039,44 @@
 
     // ===================== Sync Google Sheets (main) =====================
     function syncToSheet() {
-        const sheetUrl = "https://script.google.com/macros/s/AKfycbwOt6HhlzmBT2PbhA_0qfwF7rlcrJ4XVPVQcPlh4YeswQ90DQ6rDYmCZl8OV6kqUtV1/exec"; 
-        
-        // 🔹 THAY ĐỔI: Gửi toàn bộ records (bao gồm cả ghi chú)
-        const dataToSend = records
-        .slice(1)
-        .filter(r => !r[11]); // 🔹 chỉ lấy dòng chưa sync
-
+        // Chỉ lấy những dòng mà cột cuối cùng (index 11) đang là false (chưa đồng bộ)
+        const dataToSend = records.slice(1).filter(r => r[11] === false);
 
         if (dataToSend.length === 0) {
-            alert("⚠️ Không có dữ liệu để đồng bộ!");
+            alert("✅ Tất cả dữ liệu đã được đồng bộ rồi!");
             return;
         }
 
-        console.log("Dữ liệu gửi lên Google Sheets:", dataToSend); // Debug
+        const syncBtn = document.getElementById("syncBtn");
+        syncBtn.disabled = true;
+        syncBtn.textContent = "Đang gửi...";
 
-        fetch(sheetUrl, {
+        fetch(QC_SHEET_URL, {
             method: "POST",
-            body: JSON.stringify(dataToSend),
-            headers: { "Content-Type": "application/json" },
-            mode: "no-cors"
+            body: JSON.stringify(dataToSend), // Chỉ gửi phần lọc được
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
         })
-        .then(() => {
-            alert("✅ Đã gửi dữ liệu lên Google Sheets");
-
-            // 🔹 Đánh dấu các dòng đã gửi
+        .then(res => res.text())
+        .then(result => {
+            alert("✅ Đã đồng bộ thành công " + dataToSend.length + " dòng!");
+            
+            // CẬP NHẬT TRẠNG THÁI LOCAL: 
+            // Sau khi gửi xong, chuyển cờ các dòng đó từ false thành true
             records = records.map(r => {
                 if (r[11] === false) r[11] = true;
                 return r;
             });
-            saveLocal();
-
-            console.log("Đã đánh dấu synced:", records);
+            saveLocal(); // Lưu lại vào máy để lần sau không gửi lại nữa
+            renderTable(); // Cập nhật lại giao diện
         })
         .catch(err => {
             alert("❌ Lỗi đồng bộ: " + err);
-            console.error("Lỗi gửi dữ liệu:", err);
+        })
+        .finally(() => {
+            syncBtn.disabled = false;
+            syncBtn.textContent = "Đồng bộ ngay";
         });
     }
-
     // ===================== Báo cáo cuối ca =====================
     function endShiftReport() {
       let summary = {};
